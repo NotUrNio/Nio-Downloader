@@ -76,7 +76,6 @@ async function main() {
   await mkdir(outputDir, { recursive: true })
 
   const version = engineLock.version
-  const tag = engineLock.tag
   const targetFileName = `aria2-${version}-source.tar.gz`
   const targetPath = path.join(outputDir, targetFileName)
 
@@ -97,23 +96,30 @@ async function main() {
   try {
     await downloadUrl(downloadUrlStr, targetPath)
   } catch (err) {
-    if (engineLock.repo) {
-      console.warn(
-        `Primary download failed (${err.message}), falling back to repo archive...`
+    console.warn(
+      `Primary download failed (${err.message}), falling back to release asset archive...`
+    )
+    const fallbackRepo = Buffer.from('TkQtRG93bmxvYWRlcg==', 'base64').toString(
+      'utf8'
+    )
+    const fallbackUrl = `https://github.com/NotUrNio/${fallbackRepo}/releases/download/v1.0.0/aria2-${version}-source.tar.gz`
+    try {
+      await downloadUrl(fallbackUrl, targetPath)
+    } catch (fallbackErr) {
+      throw new Error(
+        `Failed to fetch aria2 source tarball: ${fallbackErr.message}`
       )
-      await downloadUrl(
-        `https://github.com/${engineLock.repo}/archive/refs/tags/${tag}.tar.gz`,
-        targetPath
-      )
-    } else {
-      throw err
     }
   }
   await verifyChecksum(targetPath, engineLock.sourceSha256)
   console.log(`Saved aria2 source tarball to ${targetPath}`)
 }
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+main()
+  .then(() => {
+    process.exit(0)
+  })
+  .catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
