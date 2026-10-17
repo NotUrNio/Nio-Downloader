@@ -1,0 +1,12 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <title>Nio Downloader</title>
+  <g fill="#FFFFFF" fill-rule="evenodd">
+    <!-- Left stem -->
+    <rect x="4" y="4" width="5.5" height="24" rx="2.5"/>
+    <!-- Right stem -->
+    <rect x="22.5" y="4" width="5.5" height="24" rx="2.5"/>
+    <!-- Diagonal -->
+    <path d="M 5 5 L 8.5 5 C 9.5 5 10.3 5.6 10.8 6.5 L 23.5 24.5 L 23.5 27 C 23.5 27 22.8 27 22 27 C 21 27 20.2 26.4 19.7 25.5 L 7 7.5 L 5 5 Z"/>
+  </g>
+  
+</svg>

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Nio Downloader
+GenericName=Download Manager
+Comment=Full-featured download manager
+Keywords=download;bittorrent;magnet;aria2;
+Exec=nio-downloader %U
+Terminal=false
+Type=Application
+Icon=${SNAP}/meta/gui/icon.png
+StartupWMClass=Nio Downloader
+Categories=Network;FileTransfer;P2P;
+MimeType=application/x-bittorrent;x-scheme-handler/magnet;x-scheme-handler/nio;
+X-GNOME-UsesNotifications=true

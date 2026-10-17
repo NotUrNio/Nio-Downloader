@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "protocol": "MDXP-over-MBP1",
+  "extension": {
+    "repository": "nio-downloader-extension",
+    "commit": "08a98e44800a4dc7801c592e6a06882dcdeb3963"
+  },
+  "nioDownloader": {
+    "repository": "nio-downloader",
+    "commit": "9312639735b8d9b096f7163e6f66b92712370c6c"
+  },
+  "e2e": {
+    "browserCases": 5,
+    "command": "pnpm test:e2e:remote-extension"
+  }
+}

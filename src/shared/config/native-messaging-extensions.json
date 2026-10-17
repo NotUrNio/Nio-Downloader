@@ -1,0 +1,8 @@
+{
+  "chromium": [
+    "lggbokfckofcgjndaboioakcmincinpo",
+    "efcflljngohddnmfmebiamigoikmdfbf"
+  ],
+  "firefox": ["nio-downloader-extension@mozilla.org"],
+  "safari": ["app.niodownloader.safari.extension"]
+}

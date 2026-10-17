@@ -1,0 +1,19 @@
+{
+  "repo": "NotUrNio/builtin-plugins",
+  "plugins": {
+    "nio.filename-template": {
+      "tag": "nio.filename-template@1.1.1",
+      "version": "1.1.1",
+      "file": "nio.filename-template-1.1.1.moext",
+      "sha256": "35052788a7d0348c901dc1ff0dc666c9a3f5e96215424b3161f3fa9f9ca50784",
+      "size": 18394
+    },
+    "nio.url-resolver": {
+      "tag": "nio.url-resolver@1.0.0",
+      "version": "1.0.0",
+      "file": "nio.url-resolver-1.0.0.moext",
+      "sha256": "152bebe4fe81f657b808445443b2e4171892716cc6c0a378097f4cbeff6195ad",
+      "size": 8792
+    }
+  }
+}

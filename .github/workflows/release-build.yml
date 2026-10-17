@@ -1,0 +1,345 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref, branch, or commit SHA to build'
+        required: true
+        default: 'main'
+        type: string
+      version:
+        description: 'Release version string (defaults to package.json version)'
+        required: true
+        default: '1.0.0'
+        type: string
+      mode:
+        description: 'Run mode: artifacts_only or upload_to_release'
+        required: true
+        default: 'artifacts_only'
+        type: choice
+        options:
+          - artifacts_only
+          - upload_to_release
+      tag:
+        description: 'Target release tag for upload_to_release mode (defaults to v<version>)'
+        required: false
+        default: 'v1.0.0'
+        type: string
+
+concurrency:
+  group: release-build-${{ github.workflow }}-${{ inputs.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build / ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            os: macos-14
+            platform: darwin
+            arch: arm64
+            rust_target: aarch64-apple-darwin
+            expected_files: "release/Nio-Downloader-*-arm64.dmg release/Nio-Downloader-*-arm64.zip release/latest-mac.yml"
+          - target: darwin-x64
+            os: macos-15-intel
+            platform: darwin
+            arch: x64
+            rust_target: x86_64-apple-darwin
+            expected_files: "release/Nio-Downloader-*-x64.dmg release/Nio-Downloader-*-x64.zip release/latest-mac.yml"
+          - target: win32-x64
+            os: windows-2022
+            platform: win32
+            arch: x64
+            rust_target: x86_64-pc-windows-msvc
+            expected_files: "release/Nio-Downloader-Setup-*.exe release/Nio-Downloader-*-win.zip release/latest.yml"
+          - target: linux-x64
+            os: ubuntu-24.04
+            platform: linux
+            arch: x64
+            rust_target: x86_64-unknown-linux-musl
+            expected_files: "release/Nio-Downloader-*-x86_64.AppImage release/Nio-Downloader_*_amd64.deb release/Nio-Downloader-*.x86_64.rpm release/Nio-Downloader-*-x64.pacman release/latest-linux.yml"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.8.1
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Linux packaging dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes rpm squashfs-tools zsync zstd libarchive-tools
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: 1.94.1
+          targets: ${{ matrix.rust_target }}
+
+      - name: Install node dependencies
+        env:
+          NIODOWNLOADER_SKIP_ENGINE_FETCH: '1'
+          NIODOWNLOADER_SKIP_ELECTRON_REBUILD: '1'
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure Electron runtime payload
+        run: node node_modules/electron/install.js
+
+      - name: Fetch bundled engine binary
+        run: pnpm run fetch:engine --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
+
+      - name: Quality verification checks (Linux only)
+        if: matrix.target == 'linux-x64'
+        run: |
+          pnpm run check:third-party-notices
+          pnpm run check:file-names
+          pnpm run check:boundaries
+          pnpm run check:i18n
+          pnpm run lint
+          pnpm run test
+
+      - name: Build builtin plugins
+        run: pnpm run build:builtin
+
+      - name: Build native host binary
+        run: pnpm run build:native-host -- --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
+
+      - name: Build finalize filesystem binary
+        run: pnpm run build:finalize-fs -- --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
+
+      - name: Build Safari bootstrap helpers (macOS only)
+        if: matrix.platform == 'darwin'
+        run: pnpm run build:safari-bootstrap -- --arch ${{ matrix.arch }}
+
+      - name: Build Electron bundles
+        run: |
+          pnpm run build:electron
+          pnpm run stage:electron -- --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
+
+      - name: Package macOS distribution
+        if: matrix.platform == 'darwin'
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          if [ -n "$CSC_LINK" ]; then
+            echo "Building with configured Apple code signing credentials"
+            CSC_IDENTITY_AUTO_DISCOVERY=true pnpm exec electron-builder --mac --${{ matrix.arch }} -c.mac.bundleVersion=${{ inputs.version }}.0.0 --publish never
+          else
+            echo "Building ad-hoc signed macOS package (no signing credentials provided)"
+            unset CSC_LINK CSC_KEY_PASSWORD APPLE_API_KEY APPLE_API_KEY_ID APPLE_API_ISSUER
+            CSC_IDENTITY_AUTO_DISCOVERY=false pnpm exec electron-builder --mac --${{ matrix.arch }} -c.mac.bundleVersion=${{ inputs.version }}.0.0 --publish never
+          fi
+
+      - name: Package Windows distribution
+        if: matrix.platform == 'win32'
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          if [ -n "$CSC_LINK" ]; then
+            echo "Building with configured Windows code signing credentials"
+            CSC_IDENTITY_AUTO_DISCOVERY=true pnpm exec electron-builder --win --x64 --publish never
+          else
+            echo "Building unsigned Windows package (no signing credentials provided)"
+            CSC_IDENTITY_AUTO_DISCOVERY=false pnpm exec electron-builder --win --x64 --publish never
+          fi
+
+      - name: Package Linux distribution
+        if: matrix.platform == 'linux'
+        run: |
+          CSC_IDENTITY_AUTO_DISCOVERY=false pnpm exec electron-builder --linux deb rpm pacman AppImage --x64 --publish never
+          pnpm run package:flatpak-native-host -- --version "${{ inputs.version }}" --arch x64 --output-dir release
+
+      - name: Verify Linux packages
+        if: matrix.platform == 'linux'
+        run: |
+          node scripts/verify-appimage-artifact.mjs --dir release --version "${{ inputs.version }}" --arch ${{ matrix.arch }}
+          node scripts/verify-pacman-artifact.mjs --dir release --version "${{ inputs.version }}" --arch ${{ matrix.arch }}
+
+      - name: Verify Safari desktop helpers package
+        if: matrix.platform == 'darwin'
+        run: pnpm exec vitest run tests/scripts/safari-desktop-package.test.ts
+
+      - name: Verify Windows native host CRT dependencies
+        if: matrix.platform == 'win32'
+        shell: pwsh
+        run: scripts/verify-windows-native-host-dependencies.ps1 -Binary "packages/native-host/dist/win32-x64/nio-native-host.exe"
+
+      - name: Verify expected output files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Verifying build outputs in release/ for ${{ matrix.target }}..."
+          ls -la release/
+
+          missing=0
+          for pattern in ${{ matrix.expected_files }}; do
+            # shellcheck disable=SC2086
+            matches=( $pattern )
+            if [ ! -e "${matches[0]}" ]; then
+              echo "::error::Missing expected artifact matching pattern: $pattern"
+              missing=$((missing + 1))
+            else
+              echo "Found artifact: ${matches[0]}"
+            fi
+          done
+
+          if [ "$missing" -gt 0 ]; then
+            echo "::error::Build completed but $missing required artifact(s) were missing"
+            exit 1
+          fi
+
+      - name: Upload platform artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-artifacts-${{ matrix.target }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+            release/*.AppImage
+            release/*.AppImage.zsync
+            release/*.deb
+            release/*.rpm
+            release/*.pacman
+            release/*.tar.gz
+            release/*.blockmap
+            release/latest*.yml
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Assemble and Finalize Release Artifacts
+    needs: [build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.8.1
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: release-artifacts-*
+          path: downloaded-artifacts
+
+      - name: Consolidate and merge release artifacts
+        run: node scripts/consolidate-release-artifacts.mjs --input downloaded-artifacts --output release
+
+      - name: Fetch bundled engine source archive
+        run: node scripts/fetch-aria2-source.mjs --output release
+
+      - name: Verify update metadata manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for manifest in latest-mac.yml latest.yml latest-linux.yml; do
+            if [ ! -f "release/$manifest" ]; then
+              echo "::warning::Update metadata manifest missing: $manifest"
+            else
+              echo "Found update metadata manifest: $manifest"
+            fi
+          done
+
+      - name: Validate update manifests against generated assets
+        run: |
+          node scripts/verify-update-artifacts.mjs --dir release --version "${{ inputs.version }}"
+
+      - name: Generate SHA256SUMS.txt
+        working-directory: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(find . -maxdepth 1 -type f ! -name "SHA256SUMS.txt" ! -name ".*" | sed 's|^\./||' | sort)
+          echo "Generating SHA256 checksums for:"
+          echo "$files"
+          sha256sum $files > SHA256SUMS.txt
+          echo "SHA256SUMS.txt contents:"
+          cat SHA256SUMS.txt
+
+      - name: Verify release notes file
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          NOTES="docs/release-notes/${VERSION}.md"
+          if [ ! -f "$NOTES" ]; then
+            echo "::error::Release notes file $NOTES does not exist!"
+            exit 1
+          fi
+          echo "Found release notes at $NOTES"
+
+      - name: Upload full release bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nio-downloader-v${{ inputs.version }}-release-bundle
+          path: release/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload artifacts to existing GitHub release
+        if: inputs.mode == 'upload_to_release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          TAG="${{ inputs.tag || format('v{0}', inputs.version) }}"
+
+          echo "Checking if target release $TAG exists..."
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Target release $TAG does not exist on remote repository. Refusing to create or rewrite releases in upload mode."
+            exit 1
+          fi
+
+          echo "Uploading standalone artifacts to release $TAG with --clobber..."
+          gh release upload "$TAG" --clobber release/*
+          echo "Standalone release assets successfully uploaded for $TAG."

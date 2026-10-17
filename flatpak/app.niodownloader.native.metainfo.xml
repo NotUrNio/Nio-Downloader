@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>app.niodownloader.native</id>
+
+  <name>Nio Downloader</name>
+  <summary>Full-featured download manager</summary>
+
+  <developer id="app.niodownloader">
+    <name>Nio Downloader Project</name>
+  </developer>
+
+  <project_license>MIT</project_license>
+  <metadata_license>CC0-1.0</metadata_license>
+
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </recommends>
+
+  <categories>
+    <category>Network</category>
+    <category>FileTransfer</category>
+  </categories>
+
+  <description>
+    <p>
+      Nio Downloader is a full-featured download manager that supports HTTP, FTP,
+      BitTorrent and Magnet downloads.
+    </p>
+    <ul>
+      <li>Simple and clear user interface</li>
+      <li>BitTorrent and Magnet support with selective file download</li>
+      <li>Daily automatic tracker list refresh</li>
+      <li>UPnP and NAT-PMP port mapping</li>
+      <li>Up to 10 concurrent tasks, up to 64 threads per task</li>
+      <li>User-Agent spoofing</li>
+      <li>System tray for quick operation</li>
+      <li>Light and dark themes</li>
+      <li>Optional removal of files when removing tasks</li>
+      <li>Internationalization</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">app.niodownloader.native.desktop</launchable>
+
+  <url type="homepage">https://niodownloader.com/</url>
+  <url type="bugtracker">https://github.com/NotUrNio/Nio-Downloader/issues</url>
+  <url type="help">https://niodownloader.com/manual/</url>
+  <url type="vcs-browser">https://github.com/NotUrNio/Nio-Downloader</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#34d058</color>
+    <color type="primary" scheme_preference="dark">#1f6f3a</color>
+  </branding>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Active downloads view</caption>
+      <image>https://raw.githubusercontent.com/NotUrNio/Nio-Downloader/main/screenshots/niodownloader-downloads-en-light.webp</image>
+    </screenshot>
+    <screenshot>
+      <caption>Active downloads view (dark theme)</caption>
+      <image>https://raw.githubusercontent.com/NotUrNio/Nio-Downloader/main/screenshots/niodownloader-downloads-en-dark.webp</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="1.0.0" date="2026-10-16">
+      <description>
+        <p>
+          First stable release of Nio Downloader with high-speed multi-connection downloading,
+          encrypted browser integration, plugin architecture, cross-platform UI, and headless server mode.
+        </p>
+      </description>
+    </release>
+  </releases>
+</component>

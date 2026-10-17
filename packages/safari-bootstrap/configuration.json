@@ -1,0 +1,6 @@
+{
+  "teamIdentifier": "7VMB56CA56",
+  "clientBundleIdentifier": "app.niodownloader.safari.extension",
+  "serviceBundleIdentifier": "app.niodownloader.safari.bootstrap",
+  "appGroupIdentifier": "7VMB56CA56.app.niodownloader.shared"
+}
