@@ -17,11 +17,21 @@ The same core powers two ways to run Nio Downloader:
 - **Desktop app:** Runs on macOS, Windows, and Linux
 - **Headless server:** Runs without a desktop environment, either directly on Node.js or in Docker, and includes a web UI for NAS devices and home servers
 
-## 🧪 Beta testing
+## Download
 
-Nio Downloader is currently in beta. Download the latest release from [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases) and read the release notes before installing.
+Download release files for version 1.0.0 from [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases/tag/v1.0.0):
 
-Back up your existing downloads and data before testing. When practical, test in parallel using a separate OS account, machine, or Docker data directory.
+| Platform | Architecture | Installer | Format | Notes |
+| --- | --- | --- | --- | --- |
+| macOS | Apple Silicon (arm64) | [Nio-Downloader-1.0.0-arm64.dmg](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-arm64.dmg) | DMG | Right-click Open to bypass Gatekeeper |
+| macOS | Intel (x64) | [Nio-Downloader-1.0.0-x64.dmg](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x64.dmg) | DMG | Right-click Open to bypass Gatekeeper |
+| Windows | x64 | [Nio-Downloader-Setup-1.0.0.exe](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-Setup-1.0.0.exe) | NSIS EXE | SmartScreen: More info then Run anyway |
+| Linux | x86_64 | [Nio-Downloader-1.0.0-x86_64.AppImage](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x86_64.AppImage) | AppImage | Make executable with chmod +x |
+| Linux | amd64 | [Nio-Downloader_1.0.0_amd64.deb](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader_1.0.0_amd64.deb) | DEB | Debian and Ubuntu |
+| Linux | x86_64 | [Nio-Downloader-1.0.0.x86_64.rpm](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0.x86_64.rpm) | RPM | Fedora and RHEL |
+| Linux | x64 | [Nio-Downloader-1.0.0-x64.pacman](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x64.pacman) | PACMAN | Arch Linux |
+
+Checksums for all packages are published in [SHA256SUMS.txt](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/SHA256SUMS.txt). Matching aria2 engine source code is available in [aria2-1.37.0-motrix.16-source.tar.gz](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/aria2-1.37.0-motrix.16-source.tar.gz). Detailed installation instructions are documented in [docs/INSTALL.md](docs/INSTALL.md). Releases archive: [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases).
 
 ## Screenshots
 
