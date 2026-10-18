@@ -4,7 +4,7 @@
   <p>A modern, full-featured download manager that stays simple to use</p>
 </div>
 
-[![GitHub release](https://img.shields.io/github/v/release/NotUrNio/Nio-Downloader.svg)](https://github.com/NotUrNio/Nio-Downloader/releases)
+[![GitHub release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/NotUrNio/Nio-Downloader/releases)
 
 ## Overview
 
