@@ -68,6 +68,14 @@
   </screenshots>
 
   <releases>
+    <release version="1.0.1" date="2026-10-23">
+      <description>
+        <p>
+          Update bundled aria2 engine to 1.37.0.19, introduce Windows ARM64 packaging support,
+          enhanced inspector transfer analytics, speed limit units, and safe profile migrations v8 and v9.
+        </p>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-10-16">
       <description>
         <p>

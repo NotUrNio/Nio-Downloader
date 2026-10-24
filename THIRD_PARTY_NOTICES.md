@@ -88,15 +88,15 @@ must obtain permission or replace the font before distributing the build.
 Desktop builds bundle an `aria2c` executable pinned by
 `scripts/engine.lock.json`:
 
-- **Version:** 1.37.0-motrix.16
-- **Source:** <https://github.com/motrixapp/aria2/tree/v1.37.0-motrix.16>
+- **Version:** 1.37.0-motrix.19
+- **Source:** <https://github.com/motrixapp/aria2/tree/v1.37.0-motrix.19>
 - **License:** GNU General Public License v2.0 or later (`GPL-2.0-or-later`)
 - **Full license text:** `THIRD_PARTY_LICENSES/aria2-COPYING`
 - **OpenSSL exception / notice:**
   `THIRD_PARTY_LICENSES/aria2-LICENSE.OpenSSL`
 
 The source link above identifies the source release corresponding to the
-bundled binaries. The exact corresponding source archive (`aria2-1.37.0-motrix.16-source.tar.gz`)
+bundled binaries. The exact corresponding source archive (`aria2-engine-source-1.37.0.19.tar.gz`)
 is attached directly to each GitHub release at <https://github.com/NotUrNio/Nio-Downloader/releases>,
 fulfilling the GPL-2.0-or-later written source offer. Redistributors must continue to meet the GPL source-code and
 notice obligations for the exact binaries they ship, including any additional

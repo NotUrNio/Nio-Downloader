@@ -4,7 +4,7 @@
   <p>A modern, full-featured download manager that stays simple to use</p>
 </div>
 
-[![GitHub release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/NotUrNio/Nio-Downloader/releases)
+[![GitHub release](https://img.shields.io/github/v/release/NotUrNio/Nio-Downloader.svg)](https://github.com/NotUrNio/Nio-Downloader/releases)
 
 ## Overview
 
@@ -17,21 +17,11 @@ The same core powers two ways to run Nio Downloader:
 - **Desktop app:** Runs on macOS, Windows, and Linux
 - **Headless server:** Runs without a desktop environment, either directly on Node.js or in Docker, and includes a web UI for NAS devices and home servers
 
-## Download
+## 🧪 Beta testing
 
-Download release files for version 1.0.0 from [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases/tag/v1.0.0):
+Nio Downloader is currently in beta. Download the latest release from [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases) and read the release notes before installing.
 
-| Platform | Architecture | Installer | Format | Notes |
-| --- | --- | --- | --- | --- |
-| macOS | Apple Silicon (arm64) | [Nio-Downloader-1.0.0-arm64.dmg](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-arm64.dmg) | DMG | Right-click Open to bypass Gatekeeper |
-| macOS | Intel (x64) | [Nio-Downloader-1.0.0-x64.dmg](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x64.dmg) | DMG | Right-click Open to bypass Gatekeeper |
-| Windows | x64 | [Nio-Downloader-Setup-1.0.0.exe](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-Setup-1.0.0.exe) | NSIS EXE | SmartScreen: More info then Run anyway |
-| Linux | x86_64 | [Nio-Downloader-1.0.0-x86_64.AppImage](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x86_64.AppImage) | AppImage | Make executable with chmod +x |
-| Linux | amd64 | [Nio-Downloader_1.0.0_amd64.deb](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader_1.0.0_amd64.deb) | DEB | Debian and Ubuntu |
-| Linux | x86_64 | [Nio-Downloader-1.0.0.x86_64.rpm](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0.x86_64.rpm) | RPM | Fedora and RHEL |
-| Linux | x64 | [Nio-Downloader-1.0.0-x64.pacman](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x64.pacman) | PACMAN | Arch Linux |
-
-Checksums for all packages are published in [SHA256SUMS.txt](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/SHA256SUMS.txt). Matching aria2 engine source code is available in [aria2-1.37.0-motrix.16-source.tar.gz](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/aria2-1.37.0-motrix.16-source.tar.gz). Detailed installation instructions are documented in [docs/INSTALL.md](docs/INSTALL.md). Releases archive: [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases).
+Back up your existing downloads and data before testing. When practical, test in parallel using a separate OS account, machine, or Docker data directory.
 
 ## Screenshots
 
@@ -70,7 +60,7 @@ Checksums for all packages are published in [SHA256SUMS.txt](https://github.com/
 - 📊 Customizable Dashboard with transfer stats, live activity, and task tiles
 - 🔔 System notifications when downloads finish, plus an in-app notification center
 - 🧩 QuickJS-based plugin sandboxing, fine-grained permissions, and an in-app marketplace
-- 🌐 [Nio Downloader Extension](https://github.com/NotUrNio/Nio-Downloader-Extension) for Chrome, Edge, Firefox, and Safari hands browser downloads off in one click
+- 🌐 [Nio Downloader Extension](https://github.com/NotUrNio/Nio-Downloader-Browser-Extension) for Chrome, Edge, Firefox, and Safari hands browser downloads off in one click
 - ⌨️ Official `@nio/cli` client for everyday shell use and AI agents
 - 🐳 Docker-ready headless server with secure device-code pairing for remote CLI and agent clients
 - 🎬 Extensible URL Resolver plugins for extracting media from supported sites
@@ -86,7 +76,7 @@ Nio Downloader extends beyond the desktop app with a shared protocol library, co
 |---------|--------------|--------------|
 | `@nio/mdxp` | npm package | Defines the shared JSON-RPC 2.0 wire schemas and Zod types for MDXP, with helpers for bidirectional connections |
 | `@nio/cli` | npm package | Provides the `nio` command, automatically discovers a local desktop app, and pairs with remote instances |
-| [Nio Downloader Extension](https://github.com/NotUrNio/Nio-Downloader-Extension) | Browser extension | Intercepts downloads in Chrome, Edge, Opera, Firefox, and Safari (Manifest V3), hands them off to Nio Downloader, and pairs securely over native messaging |
+| [Nio Downloader Extension](https://github.com/NotUrNio/Nio-Downloader-Browser-Extension) | Browser extension | Intercepts downloads in Chrome, Edge, Opera, Firefox, and Safari (Manifest V3), hands them off to Nio Downloader, and pairs securely over native messaging |
 | Nio Plugin SDK | Four npm packages | Includes `@nio/plugin-manifest-schema`, `@nio/plugin-api`, `@nio/plugin-cli`, and `create-nio-plugin` for developing, testing, and packaging plugins |
 | Builtin Plugins | Signed `.moext` packages | Includes official plugins for filename templating, page scraping, and URL resolving |
 | Plugin Registry | Public JSON feed | Configurable plugin listings and install metadata for the in-app marketplace |
@@ -121,7 +111,7 @@ Plugins run inside a QuickJS sandbox without Node.js APIs or direct file and net
 
 Nio Downloader Extension is maintained in the dedicated repository:
 
-- [Nio Downloader Extension Repository](https://github.com/NotUrNio/Nio-Downloader-Extension)
+- [Nio Downloader Extension Repository](https://github.com/NotUrNio/Nio-Downloader-Browser-Extension)
 
 For installation and pairing, see the [extension contract documentation](./docs/EXTENSION_CONTRACT.md).
 

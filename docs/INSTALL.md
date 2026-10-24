@@ -2,22 +2,6 @@
 
 This document provides installation instructions for Nio Downloader across supported platforms.
 
-## Download
-
-Download release files for version 1.0.0 from [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases/tag/v1.0.0):
-
-| Platform | Architecture | Installer | Format | Notes |
-| --- | --- | --- | --- | --- |
-| macOS | Apple Silicon (arm64) | [Nio-Downloader-1.0.0-arm64.dmg](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-arm64.dmg) | DMG | Right-click Open to bypass Gatekeeper |
-| macOS | Intel (x64) | [Nio-Downloader-1.0.0-x64.dmg](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x64.dmg) | DMG | Right-click Open to bypass Gatekeeper |
-| Windows | x64 | [Nio-Downloader-Setup-1.0.0.exe](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-Setup-1.0.0.exe) | NSIS EXE | SmartScreen: More info then Run anyway |
-| Linux | x86_64 | [Nio-Downloader-1.0.0-x86_64.AppImage](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x86_64.AppImage) | AppImage | Make executable with chmod +x |
-| Linux | amd64 | [Nio-Downloader_1.0.0_amd64.deb](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader_1.0.0_amd64.deb) | DEB | Debian and Ubuntu |
-| Linux | x86_64 | [Nio-Downloader-1.0.0.x86_64.rpm](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0.x86_64.rpm) | RPM | Fedora and RHEL |
-| Linux | x64 | [Nio-Downloader-1.0.0-x64.pacman](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/Nio-Downloader-1.0.0-x64.pacman) | PACMAN | Arch Linux |
-
-Checksums for all packages are published in [SHA256SUMS.txt](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/SHA256SUMS.txt). Matching aria2 engine source code is available in [aria2-1.37.0-motrix.16-source.tar.gz](https://github.com/NotUrNio/Nio-Downloader/releases/download/v1.0.0/aria2-1.37.0-motrix.16-source.tar.gz). Releases archive: [GitHub Releases](https://github.com/NotUrNio/Nio-Downloader/releases).
-
 ---
 
 ## macOS Installation

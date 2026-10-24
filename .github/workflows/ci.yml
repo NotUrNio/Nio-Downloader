@@ -158,6 +158,9 @@ jobs:
       - name: Architecture and icon import boundaries
         run: pnpm run check:boundaries
 
+      - name: Validate repository URLs
+        run: pnpm run check:urls
+
       # Fingerprint the resolved Biome first: lint verdicts have disagreed
       # between runs with identical inputs before, and the version line is
       # the fastest way to tell a toolchain drift from a real finding.

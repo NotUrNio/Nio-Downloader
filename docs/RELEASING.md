@@ -99,7 +99,7 @@ When `create_draft` is enabled, the final workflow job automatically attaches al
      - `Nio-Downloader-1.0.0.x86_64.rpm`
      - `Nio-Downloader-1.0.0-x64.pacman`
      - `Nio-Downloader-Native-Host-1.0.0-linux-x64.tar.gz`
-     - `aria2-*-source.tar.gz` (exact source code archive corresponding to the bundled engine)
+     - `aria2-engine-source-1.37.0.19.tar.gz` (exact source code archive corresponding to the bundled engine build)
      - `latest.yml`, `latest-mac.yml`, `latest-linux.yml`
      - `SHA256SUMS.txt`
    - Confirm the release notes body matches `docs/release-notes/<version>.md`.
@@ -183,12 +183,15 @@ All release artifacts must use hyphenated names with **no spaces**:
 - Linux: `Nio-Downloader-<version>-<arch>.AppImage`, `Nio-Downloader_<version>_<arch>.deb`, `Nio-Downloader-<version>.<arch>.rpm`, `Nio-Downloader-<version>-<arch>.pacman`
 
 ### Aria2 GPL Source Code Archive
-To fulfill the GPL-2.0-or-later source code distribution requirement for the bundled aria2 binary, attach the exact corresponding source code tarball to each GitHub Release. Do not fork aria2 on GitHub.
+To fulfill the GPL-2.0-or-later source code distribution requirement for the bundled aria2 binary, attach the exact corresponding source code tarball `aria2-engine-source-1.37.0.19.tar.gz` to each GitHub Release. The bundled binary build is compiled from the upstream aria2 tree at tag `v1.37.0-motrix.19` (<https://github.com/motrixapp/aria2/tree/v1.37.0-motrix.19>).
 Fetch the exact source tarball into `release/`:
 ```bash
 node scripts/fetch-aria2-source.mjs --output release
 ```
-This produces `aria2-<version>-source.tar.gz` matching `scripts/engine.lock.json`.
+This produces `aria2-engine-source-1.37.0.19.tar.gz` matching `scripts/engine.lock.json`.
+
+### Windows ARM64 Builds
+Windows ARM64 installer packages (`win32-arm64`) are supported in build configuration but marked unverified until tested on native hardware. The GitHub Actions release workflow remains strictly manual-only.
 
 ### Generating SHA256SUMS.txt
 In the `release/` directory:

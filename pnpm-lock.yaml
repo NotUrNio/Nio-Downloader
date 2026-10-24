@@ -192,8 +192,8 @@ importers:
         specifier: ^0.1.4
         version: 0.1.4
       '@motrix/plugin-manifest-schema':
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: ^2.2.0
+        version: 2.2.0
       '@niodownloader/mdxp':
         specifier: workspace:*
         version: link:packages/mdxp
@@ -349,8 +349,8 @@ importers:
         specifier: ^0.5.0
         version: 0.5.0
       '@motrix/plugin-api':
-        specifier: 2.1.0
-        version: 2.1.0
+        specifier: 2.2.0
+        version: 2.2.0
       '@motrix/plugin-api-2-0':
         specifier: npm:@motrix/plugin-api@2.1.0
         version: '@motrix/plugin-api@2.1.0'
@@ -1126,8 +1126,11 @@ packages:
   '@motrix/plugin-api@2.1.0':
     resolution: {integrity: sha512-XJn8re75nGUFSOA9dsEAjFkj8FqY6pQMk5wnz9E7Ym+icOp7q0JChjS/ILETvsu1gmvntlzdzazmgi4U42fPIA==}
 
-  '@motrix/plugin-manifest-schema@2.1.1':
-    resolution: {integrity: sha512-/aVHes64pk3P0z3Myfa08tk4Zp5AQlhwIL28clvjkIM3x7TkWa8W+FXsXf2FZ+a/Q/gjuCQGAstHOxivQ7+euA==}
+  '@motrix/plugin-api@2.2.0':
+    resolution: {integrity: sha512-87gTWZY3k8wAlxQxp4RQ1dZ4Egi9zMoeW1lsPFZeBd6nOsQTn/hWDyJcc3MmRYMv4ZNteb210hTzlzeHCNC7lA==}
+
+  '@motrix/plugin-manifest-schema@2.2.0':
+    resolution: {integrity: sha512-lR1D7+AHM6ElzaP5BvCgVkxL5WXmU3v/WO0GwGs2bP8+axm5PK8jnxzd+JlgGja3/b1nl+lCSksf6G9VOyVc+w==}
 
   '@noble/curves@2.4.0':
     resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
@@ -5489,7 +5492,9 @@ snapshots:
 
   '@motrix/plugin-api@2.1.0': {}
 
-  '@motrix/plugin-manifest-schema@2.1.1':
+  '@motrix/plugin-api@2.2.0': {}
+
+  '@motrix/plugin-manifest-schema@2.2.0':
     dependencies:
       zod: 4.6.5
 

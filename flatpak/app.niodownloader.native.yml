@@ -101,7 +101,7 @@ modules:
         set -e
         output="$(src/aria2c --version)"
         printf '%s\n' "$output"
-        printf '%s\n' "$output" | grep -qF 'aria2 version 1.37.0-motrix.16'
+        printf '%s\n' "$output" | grep -qF 'aria2 version 1.37.0-motrix.19'
         for feature in \
           'Async DNS' \
           'BitTorrent' \
@@ -123,8 +123,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/motrixapp/aria2.git
-        tag: v1.37.0-motrix.16
-        commit: e093973f113f0a880f9757a2ad0258cb2356295e
+        tag: v1.37.0-motrix.19
+        commit: 5c636cc13753a3b3384ec7f51a2587f851d2e4bd
         x-checker-data:
           type: git
           tag-pattern: ^v([\d.]+-motrix\.\d+)$
@@ -136,9 +136,9 @@ modules:
         commands:
           - |
             sed -i -E \
-              's/AC_INIT\(\[aria2\],\[[^]]+\]/AC_INIT([aria2],[1.37.0-motrix.16]/' \
+              's/AC_INIT\(\[aria2\],\[[^]]+\]/AC_INIT([aria2],[1.37.0-motrix.19]/' \
               configure.ac
-            grep -qF 'AC_INIT([aria2],[1.37.0-motrix.16]' configure.ac
+            grep -qF 'AC_INIT([aria2],[1.37.0-motrix.19]' configure.ac
       - type: script
         dest-filename: autogen.sh
         commands:
@@ -357,27 +357,19 @@ modules:
       # Signed builtin plugins. fetch-builtins.mjs rechecks every locked
       # artifact digest and detached Ed25519 signature before unpacking.
       - type: file
-        url: https://github.com/NotUrNio/builtin-plugins/releases/download/nio.filename-template%401.1.1/nio.filename-template-1.1.1.moext
+        path: ../extra/builtin-artifacts/nio.filename-template-1.1.1.moext
         sha256: 35052788a7d0348c901dc1ff0dc666c9a3f5e96215424b3161f3fa9f9ca50784
         dest: flatpak-builtins
       - type: file
-        url: https://github.com/NotUrNio/builtin-plugins/releases/download/nio.filename-template%401.1.1/nio.filename-template-1.1.1.moext.sig
+        path: ../extra/builtin-artifacts/nio.filename-template-1.1.1.moext.sig
         sha256: 633a6b2a6781165b5abcc6848a4e5c180c73e6e7960d733bbbff5fbf29ee0282
         dest: flatpak-builtins
       - type: file
-        url: https://github.com/NotUrNio/builtin-plugins/releases/download/nio.scraper-hook%401.0.0/nio.scraper-hook-1.0.0.moext
-        sha256: 2b6d1771fa0ccbd21e3a3da1284a589bd8f93d3a2ad6c6813fba6f21d2cfcb25
-        dest: flatpak-builtins
-      - type: file
-        url: https://github.com/NotUrNio/builtin-plugins/releases/download/nio.scraper-hook%401.0.0/nio.scraper-hook-1.0.0.moext.sig
-        sha256: 7403d5ec5f61819370bcf153fe955e0736109b844c1eb53f959e6ebd0790be78
-        dest: flatpak-builtins
-      - type: file
-        url: https://github.com/NotUrNio/builtin-plugins/releases/download/nio.url-resolver%401.0.0/nio.url-resolver-1.0.0.moext
+        path: ../extra/builtin-artifacts/nio.url-resolver-1.0.0.moext
         sha256: 152bebe4fe81f657b808445443b2e4171892716cc6c0a378097f4cbeff6195ad
         dest: flatpak-builtins
       - type: file
-        url: https://github.com/NotUrNio/builtin-plugins/releases/download/nio.url-resolver%401.0.0/nio.url-resolver-1.0.0.moext.sig
+        path: ../extra/builtin-artifacts/nio.url-resolver-1.0.0.moext.sig
         sha256: 170fc10aaef0fdebcd1533ec80ee20723c4fbdf47fc3261bd8bd64fffd3149bd
         dest: flatpak-builtins
 
