@@ -685,6 +685,7 @@ export async function verifyElectronPackage(options) {
     (sum, entry) => sum + entry.bytes,
     0
   )
+  // 27 MiB payload budget covers main process recovery and plugin operations including the ELK graph worker.
   const payloadBytes = asarBytes + unpackedBytes
   const appBytes = appFiles.reduce((sum, entry) => sum + entry.bytes, 0)
   const localeFiles = appFiles.filter((entry) =>

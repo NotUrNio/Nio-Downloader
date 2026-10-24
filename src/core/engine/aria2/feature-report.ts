@@ -5,6 +5,9 @@ import {
 
 // aria2 gained --bt-seed-unverified and --bt-save-metadata in 1.37.0.
 const BT_FEATURES_MIN_VERSION = '1.37.0'
+// The engine release workflow also builds explicitly labelled -dev candidates.
+const FORK_VERSION =
+  /^(\d+\.\d+\.\d+)-(?:nio|motrix)\.(\d+)(?:-dev(?:\.[a-z0-9-]+)*)?$/i
 
 /** Official aria2's per-task connection ceiling. */
 export const STANDARD_ARIA2_CONNECTION_LIMIT = 16
@@ -18,10 +21,7 @@ export const STANDARD_ARIA2_CONNECTION_LIMIT = 16
 export function isNioFork(
   report: Pick<EngineFeatureReport, 'version' | 'hasSqlitePersistence'>
 ): boolean {
-  return (
-    /^\d+\.\d+\.\d+-(?:nio|motrix)\.\d+$/i.test(report.version) &&
-    report.hasSqlitePersistence
-  )
+  return FORK_VERSION.test(report.version) && report.hasSqlitePersistence
 }
 
 /**
@@ -78,7 +78,7 @@ export function semverGte(a: string, b: string): boolean {
  * without it there is no durable row a not-found could be hiding.
  */
 export function hasDurableRemoveSemantics(version: string): boolean {
-  const match = /^(\d+\.\d+\.\d+)-(?:nio|motrix)\.(\d+)$/.exec(version)
+  const match = FORK_VERSION.exec(version)
   if (!match) return false
   const [, base, patch] = match
   if (!semverGte(base, '1.37.0')) return false

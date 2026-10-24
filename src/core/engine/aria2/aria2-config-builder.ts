@@ -11,6 +11,8 @@ import type { EngineSettings } from '@shared/types/settings'
 import writeFileAtomic from 'write-file-atomic'
 import { dnsModeToAsyncDns } from './dns-fallback'
 
+export const DEFAULT_ENGINE_USER_AGENT = 'aria2/1.37.0'
+
 export interface Aria2ConfigBuilderOptions {
   rpcListenAll?: boolean
   /** Server HTTP and engine RPC must use the same torrent upload budget. */
@@ -230,7 +232,11 @@ export class Aria2ConfigBuilder {
       `--max-connection-per-server=${settings.maxConnectionPerServer}`,
       `--split=${settings.split}`,
       `--min-split-size=${settings.minSplitSize}`,
-      `--user-agent=${settings.userAgent}`,
+      `--user-agent=${
+        settings.userAgent && settings.userAgent.trim().length > 0
+          ? settings.userAgent
+          : DEFAULT_ENGINE_USER_AGENT
+      }`,
       `--connect-timeout=${settings.connectTimeout}`,
       `--timeout=${settings.socketTimeout}`,
       `--max-tries=${settings.maxTries}`,

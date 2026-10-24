@@ -32,7 +32,7 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '..')
 const EXTRA_DIR = path.join(REPO_ROOT, 'extra')
 const LOCK_PATH = path.join(SCRIPT_DIR, 'engine.lock.json')
-const DEFAULT_REPO = 'motrixapp/aria2'
+const DEFAULT_REPO = 'NotUrNio/Nio-Downloader'
 // Engine identifier recorded in the lockfile. This fetch tooling is
 // engine-agnostic by name; today it is configured for aria2. A future
 // self-built engine gets its own lockfile/config rather than a branch here.
@@ -64,6 +64,7 @@ function resolveTimeoutMs() {
 const DESKTOP_TARGETS = [
   { key: 'darwin-arm64', os: 'darwin', releaseArch: 'arm64', ext: 'tar.gz' },
   { key: 'darwin-x64', os: 'darwin', releaseArch: 'x64', ext: 'tar.gz' },
+  { key: 'win32-arm64', os: 'win32', releaseArch: 'arm64', ext: 'zip' },
   { key: 'win32-x64', os: 'win32', releaseArch: 'x64', ext: 'zip' },
   { key: 'win32-ia32', os: 'win32', releaseArch: 'ia32', ext: 'zip' },
   { key: 'linux-x64', os: 'linux', releaseArch: 'x64', ext: 'tar.gz' },
@@ -340,9 +341,18 @@ export async function installAsset(ctx, deps = defaultDeps) {
     }
   }
 
+  const localMirror =
+    process.env.NIODOWNLOADER_ENGINE_MIRROR_DIR ||
+    path.join(REPO_ROOT, '..', '_work', 'engine-mirror')
+  let archiveBytes
   const url = `${GITHUB}/${repo}/releases/download/${tag}/${asset.file}`
-  deps.log(`[fetch-engine] ${key}: downloading ${asset.file}`)
-  const archiveBytes = await deps.download(url)
+  if (deps.fileExists(path.join(localMirror, asset.file))) {
+    deps.log(`[fetch-engine] ${key}: using local mirror ${asset.file}`)
+    archiveBytes = await deps.readFile(path.join(localMirror, asset.file))
+  } else {
+    deps.log(`[fetch-engine] ${key}: downloading ${asset.file}`)
+    archiveBytes = await deps.download(url)
+  }
   if (!verifyDigest(archiveBytes, asset.archiveSha256)) {
     throw new Error(
       'archive digest mismatch\n' +
@@ -417,7 +427,7 @@ export async function runWriteLock(args, existing, deps = defaultDeps) {
   const assets = {}
   for (const target of DESKTOP_TARGETS) {
     const bin = binaryName(target.os)
-    const file = `aria2c-${version}-${target.os}-${target.releaseArch}.${target.ext}`
+    const file = `aria2-engine-${version}-${target.os}-${target.releaseArch}.${target.ext}`
     const archiveSha256 = sums.get(file)
     if (!archiveSha256) {
       deps.logError(`[fetch-engine] SHA256SUMS is missing ${file}`)
@@ -510,6 +520,12 @@ export async function run(argv, deps = defaultDeps) {
   const hostMode = !args.all && !args.platform && !args.arch
   if (hostMode && !lock.assets[resolveHostKey(host.platform, host.arch)]) {
     const hostKey = resolveHostKey(host.platform, host.arch)
+    if (DESKTOP_TARGETS.some((target) => target.key === hostKey)) {
+      deps.logError(
+        `[fetch-engine] supported desktop target ${hostKey} is missing from the lockfile; regenerate it from a complete aria2 release`
+      )
+      return EXIT_FAILURE
+    }
     deps.log(
       `[fetch-engine] no prebuilt aria2 binary for this host (${hostKey}) — ` +
         'skipping (this platform is not packaged)'

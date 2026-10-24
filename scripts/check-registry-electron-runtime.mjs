@@ -33,13 +33,15 @@ try {
     }),
   ])
 
+  const env = {
+    ...process.env,
+    NIODOWNLOADER_REGISTRY_RENDERER_BUNDLE: rendererBundle,
+  }
+  delete env.ELECTRON_RUN_AS_NODE
   const exitCode = await new Promise((resolve, reject) => {
     const child = spawn(electronPath, [mainBundle], {
       stdio: 'inherit',
-      env: {
-        ...process.env,
-        NIODOWNLOADER_REGISTRY_RENDERER_BUNDLE: rendererBundle,
-      },
+      env,
     })
     child.once('error', reject)
     child.once('exit', (code, signal) => {

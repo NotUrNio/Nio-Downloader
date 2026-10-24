@@ -56,6 +56,14 @@ describe('isNioFork', () => {
       isNioFork(buildFeatureReport('1.37.0-nio.10', ['SQLite3-Persistence']))
     ).toBe(true)
     expect(
+      isNioFork(buildFeatureReport('1.37.0-motrix.19', ['SQLite3-Persistence']))
+    ).toBe(true)
+    expect(
+      isNioFork(
+        buildFeatureReport('1.37.0-motrix.19-dev.123', ['SQLite3-Persistence'])
+      )
+    ).toBe(true)
+    expect(
       isNioFork(buildFeatureReport('1.37.0', ['SQLite3-Persistence']))
     ).toBe(false)
     expect(isNioFork(buildFeatureReport('1.37.0-nio.10', []))).toBe(false)
@@ -66,6 +74,8 @@ describe('hasDurableRemoveSemantics', () => {
   it('trusts nio fork 1.37.0-nio.3 and later', () => {
     expect(hasDurableRemoveSemantics('1.37.0-nio.3')).toBe(true)
     expect(hasDurableRemoveSemantics('1.37.0-nio.4')).toBe(true)
+    expect(hasDurableRemoveSemantics('1.37.0-motrix.19')).toBe(true)
+    expect(hasDurableRemoveSemantics('1.37.0-motrix.19-dev.123')).toBe(true)
     expect(hasDurableRemoveSemantics('1.38.0-nio.1')).toBe(true)
   })
 

@@ -79,7 +79,7 @@
       "metadataFile": "scripts/engine.lock.json",
       "nameField": "engine",
       "versionField": "version",
-      "sourceTemplate": "https://github.com/{repo}/tree/{tag}",
+      "sourceTemplate": "https://github.com/motrixapp/aria2/tree/v{version}",
       "licenseDeclared": "GPL-2.0-or-later",
       "licenseFiles": [
         "THIRD_PARTY_LICENSES/aria2-COPYING",

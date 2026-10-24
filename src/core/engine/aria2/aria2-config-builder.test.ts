@@ -38,7 +38,10 @@ vi.mock('write-file-atomic', () => ({ default: mockWriteFileAtomic }))
 import type { Aria2ProxyOptions } from '@core/proxy/serializers'
 import { DEFAULT_ENGINE_SETTINGS } from '@core/settings/validators'
 import type { EngineSettings } from '@shared/types/settings'
-import { Aria2ConfigBuilder } from './aria2-config-builder'
+import {
+  Aria2ConfigBuilder,
+  DEFAULT_ENGINE_USER_AGENT,
+} from './aria2-config-builder'
 
 const DEFAULT_SAVE_DIR = '/home/user/Downloads'
 const TEST_RPC_SECRET = 'test-rpc-secret'
@@ -628,6 +631,19 @@ describe('Aria2ConfigBuilder', () => {
       expect(args).toContain('--bt-enable-lpd=false')
       expect(args).toContain('--seed-ratio=2')
       expect(args.some((arg) => arg.startsWith('--seed-time='))).toBe(false)
+    })
+
+    it('falls back to DEFAULT_ENGINE_USER_AGENT when userAgent is blank', () => {
+      expect(DEFAULT_ENGINE_USER_AGENT).toBe('aria2/1.37.0')
+      const emptyUa: EngineSettings = {
+        ...DEFAULT_ENGINE_SETTINGS,
+        userAgent: '   ',
+      }
+      const args = buildArgs(emptyUa, true, null, {
+        download: 0,
+        upload: 0,
+      })
+      expect(args).toContain(`--user-agent=${DEFAULT_ENGINE_USER_AGENT}`)
     })
   })
 

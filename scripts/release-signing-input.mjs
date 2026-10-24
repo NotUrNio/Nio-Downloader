@@ -41,7 +41,7 @@ const TRUSTED_INPUT_SHA256 = Object.freeze({
   'scripts/sign-macos.mjs':
     '6365a049d1e4d2f3c7c560e26eb98d970b900c10876c55ff70cbabe4b93cb862',
   'electron-builder.signing.json':
-    '9448cf974a51e1e80edb52e3e622068e3eaf07749b1b17961f9566994b125b37',
+    '1ae627855b23b7e34317d4d9dc8dcada2c156adb59c25dc7d670533590c6c470',
   'signing-build-resources/256x256.png':
     '31d4ce02f34383561ab9bdb95fce501c1660cac012542e0c7ecba75204b7e4a1',
   'signing-build-resources/background.tiff':
@@ -67,7 +67,7 @@ const TRUSTED_INPUT_SHA256 = Object.freeze({
   'signing-tool/package-lock.json':
     '7ec3f295b4c627ee4a59c263678be49e43a23c1a7d3f861acadbcb8f92687123',
   'scripts/electron-package-size-budgets.json':
-    '331910aee89b894acb3587387763f05f0a9179290a88cf6ad7ced1d9560bb9c7',
+    '6a7585a5f922cfc5a90e83ac778bcd46efae90ba9079853e3a66ad275b2438c7',
   'scripts/electron-package-utils.mjs':
     '9d408f9edc91182be5d5aed39f2c5a5d20f5523e08d9c08e630c23c66302daa8',
   'scripts/before-build-use-staged-dependencies.mjs':
@@ -75,7 +75,7 @@ const TRUSTED_INPUT_SHA256 = Object.freeze({
   'scripts/native-binary-target.mjs':
     '6f0a42eecf729eb6de2df28b5d7449993590e494deb4e309b99c367094045797',
   'scripts/verify-electron-package.mjs':
-    '1abc5b1bfe90ebccf0c8dd50679ef64a821667b45090d8f782a0d562d2b7a12b',
+    '82f7f3c3e97da256a4ba12599d39aa264f6aee4901f92383c0cbf5931f4ac3ab',
 })
 
 // Use electron-builder's default resource names so the restricted config can

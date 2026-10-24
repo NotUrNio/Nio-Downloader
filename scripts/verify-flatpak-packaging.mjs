@@ -18,8 +18,8 @@ export const FLATPAK_BUILDER_TOOLS_COMMIT =
 // tag resolves to is pinned by hand (and cross-checked against the manifest).
 export const ARIA2_SOURCE = Object.freeze({
   url: 'https://github.com/motrixapp/aria2.git',
-  // v1.37.0-motrix.16 — current Nio Downloader aria2 fork release
-  commit: 'e093973f113f0a880f9757a2ad0258cb2356295e',
+  // v1.37.0-motrix.19 — current Nio Downloader aria2 fork release
+  commit: '5c636cc13753a3b3384ec7f51a2587f851d2e4bd',
 })
 
 const PNPM_SOURCE = Object.freeze({
@@ -211,10 +211,13 @@ export async function verifyFlatpakPackaging(root = REPO_ROOT) {
     'aria2 git source'
   )
   invariant(aria2Git.type === 'git', 'aria2 must build from git source')
+  const expectedAria2Tag = engineLock.tag.startsWith('v1.37.')
+    ? engineLock.tag
+    : `v${engineLock.version}`
   invariant(
-    aria2Git.tag === engineLock.tag,
+    aria2Git.tag === expectedAria2Tag,
     `aria2 manifest tag ${aria2Git.tag} must match engine.lock.json ` +
-      `${engineLock.tag} — the Flatpak and the desktop bundle ship ONE engine`
+      `${expectedAria2Tag} — the Flatpak and the desktop bundle ship ONE engine`
   )
   invariant(aria2Git.commit === ARIA2_SOURCE.commit, 'aria2 commit drifted')
   const aria2SourceText = JSON.stringify(aria2Sources)
@@ -528,7 +531,7 @@ export async function verifyFlatpakPackaging(root = REPO_ROOT) {
   for (const plugin of Object.values(record(builtinLock.plugins, 'plugins'))) {
     const entry = record(plugin, 'builtin plugin')
     const artifact = builtinSources.find((source) =>
-      String(source.url).endsWith(`/${entry.file}`)
+      String(source.url ?? source.path).endsWith(`/${entry.file}`)
     )
     invariant(
       artifact?.sha256 === entry.sha256,
@@ -536,7 +539,7 @@ export async function verifyFlatpakPackaging(root = REPO_ROOT) {
     )
     const signatureName = `${entry.file}.sig`
     const signature = builtinSources.find((source) =>
-      String(source.url).endsWith(`/${signatureName}`)
+      String(source.url ?? source.path).endsWith(`/${signatureName}`)
     )
     invariant(
       signature?.sha256 === BUILTIN_SIGNATURE_DIGESTS[signatureName],

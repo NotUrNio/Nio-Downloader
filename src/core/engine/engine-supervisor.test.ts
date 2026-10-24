@@ -356,6 +356,7 @@ describe('EngineSupervisor', () => {
           download: true,
           updateApp: false,
           updateTrackers: false,
+          plugins: false,
         },
       }
       const after = { ...before, host: 'after.example' }

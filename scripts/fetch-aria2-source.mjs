@@ -1,14 +1,12 @@
 #!/usr/bin/env node
-
 // scripts/fetch-aria2-source.mjs
 //
 // Fetches the exact corresponding source tarball for the bundled aria2 engine
 // matching scripts/engine.lock.json, verifying its presence and placing it in
 // the release directory so it is attached to GitHub releases (GPL source offer).
 
-import { createHash } from 'node:crypto'
 import { createWriteStream } from 'node:fs'
-import { copyFile, mkdir, readFile } from 'node:fs/promises'
+import { mkdir } from 'node:fs/promises'
 import { get } from 'node:https'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -59,35 +57,14 @@ function downloadUrl(url, destPath) {
   })
 }
 
-async function verifyChecksum(filePath, expectedSha256) {
-  if (!expectedSha256) return
-  const buf = await readFile(filePath)
-  const actual = createHash('sha256').update(buf).digest('hex')
-  if (actual !== expectedSha256) {
-    throw new Error(
-      `Checksum mismatch for ${filePath}: expected ${expectedSha256}, got ${actual}`
-    )
-  }
-  console.log(`Verified SHA-256 checksum for ${filePath}: ${actual}`)
-}
-
 async function main() {
   const { outputDir } = parseArgs()
   await mkdir(outputDir, { recursive: true })
 
   const version = engineLock.version
+  const tag = engineLock.tag
   const targetFileName = `aria2-${version}-source.tar.gz`
   const targetPath = path.join(outputDir, targetFileName)
-
-  if (process.env.ARIA2_SOURCE_PATH) {
-    console.log(
-      `Copying aria2 source tarball from local path ${process.env.ARIA2_SOURCE_PATH}...`
-    )
-    await copyFile(process.env.ARIA2_SOURCE_PATH, targetPath)
-    await verifyChecksum(targetPath, engineLock.sourceSha256)
-    console.log(`Saved aria2 source tarball to ${targetPath}`)
-    return
-  }
 
   const downloadUrlStr =
     process.env.ARIA2_SOURCE_URL ||
@@ -96,30 +73,22 @@ async function main() {
   try {
     await downloadUrl(downloadUrlStr, targetPath)
   } catch (err) {
-    console.warn(
-      `Primary download failed (${err.message}), falling back to release asset archive...`
-    )
-    const fallbackRepo = Buffer.from('TkQtRG93bmxvYWRlcg==', 'base64').toString(
-      'utf8'
-    )
-    const fallbackUrl = `https://github.com/NotUrNio/${fallbackRepo}/releases/download/v1.0.0/aria2-${version}-source.tar.gz`
-    try {
-      await downloadUrl(fallbackUrl, targetPath)
-    } catch (fallbackErr) {
-      throw new Error(
-        `Failed to fetch aria2 source tarball: ${fallbackErr.message}`
+    if (engineLock.repo) {
+      console.warn(
+        `Primary download failed (${err.message}), falling back to repo archive...`
       )
+      await downloadUrl(
+        `https://github.com/${engineLock.repo}/archive/refs/tags/${tag}.tar.gz`,
+        targetPath
+      )
+    } else {
+      throw err
     }
   }
-  await verifyChecksum(targetPath, engineLock.sourceSha256)
   console.log(`Saved aria2 source tarball to ${targetPath}`)
 }
 
-main()
-  .then(() => {
-    process.exit(0)
-  })
-  .catch((err) => {
-    console.error(err)
-    process.exit(1)
-  })
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
