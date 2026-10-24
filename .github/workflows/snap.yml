@@ -278,7 +278,7 @@ jobs:
           github.ref == 'refs/heads/main' &&
           github.ref_protected == true
         )
-      ) && secrets.SNAPCRAFT_STORE_CREDENTIALS != ''
+      )
     needs: [preflight, build]
     runs-on: ubuntu-24.04
     # Bounded pre-mutation steps plus a 45-minute release/rollback window.
@@ -397,21 +397,25 @@ jobs:
         run: sudo snap install snapcraft --classic --channel=9.x/stable
 
       - name: Validate scoped Store credential
+        id: credentials
         timeout-minutes: 5
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         run: |
           set -euo pipefail
           if [[ -z "${SNAPCRAFT_STORE_CREDENTIALS:-}" ]]; then
-            echo "Missing snap-store-edge SNAPCRAFT_STORE_CREDENTIALS" >&2
-            exit 1
+            echo "Missing snap-store-edge SNAPCRAFT_STORE_CREDENTIALS; skipping edge publication"
+            echo "has_credentials=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "has_credentials=true" >> "$GITHUB_OUTPUT"
           snapcraft whoami
           snapcraft status nio-downloader
 
       # Upload first without releasing. Only the exact revisions returned by
       # these two uploads may cross the latest/edge boundary.
       - name: Upload complete build set
+        if: steps.credentials.outputs.has_credentials == 'true'
         timeout-minutes: 20
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -473,6 +477,7 @@ jobs:
       # helper instead binds the captured revisions, closes the target before
       # mutation, and restores the previous mapping after a normal failure.
       - name: Release exact build set to edge
+        if: steps.credentials.outputs.has_credentials == 'true'
         timeout-minutes: 45
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -506,6 +511,7 @@ jobs:
             --delay-ms 10000
 
       - name: Verify public edge channel
+        if: steps.credentials.outputs.has_credentials == 'true'
         timeout-minutes: 10
         env:
           EXPECTED_VERSION: ${{ needs.preflight.outputs.version }}
@@ -522,6 +528,7 @@ jobs:
       # This immutable, run-associated artifact is the only trusted revision
       # provenance accepted by snap-promote.yml.
       - name: Preserve trusted revision record
+        if: steps.credentials.outputs.has_credentials == 'true'
         timeout-minutes: 5
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
