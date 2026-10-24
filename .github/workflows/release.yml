@@ -53,11 +53,24 @@ jobs:
       container_immutable_tags: ${{ steps.container.outputs.container_immutable_tags }}
       container_floating_tags: ${{ steps.container.outputs.container_floating_tags }}
       container_labels: ${{ steps.container.outputs.container_labels }}
+      has_signing_secrets: ${{ steps.credentials.outputs.has_signing_secrets }}
     steps:
       - name: Checkout release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Check available signing credentials
+        id: credentials
+        shell: bash
+        env:
+          MAC_CERTS: ${{ secrets.MAC_CERTS }}
+        run: |
+          if [[ -n "${MAC_CERTS:-}" ]]; then
+            echo "has_signing_secrets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_signing_secrets=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Validate release metadata
         id: metadata
@@ -379,6 +392,7 @@ jobs:
         if: >-
           github.event_name == 'push' &&
           startsWith(github.ref, 'refs/tags/v') &&
+          needs.preflight.outputs.has_signing_secrets == 'true' &&
           (matrix.platform == 'darwin' || matrix.platform == 'win32')
         run: >-
           node scripts/release-signing-input.mjs
@@ -393,6 +407,7 @@ jobs:
         if: >-
           github.event_name == 'push' &&
           startsWith(github.ref, 'refs/tags/v') &&
+          needs.preflight.outputs.has_signing_secrets == 'true' &&
           (matrix.platform == 'darwin' || matrix.platform == 'win32')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -544,7 +559,8 @@ jobs:
       - name: Upload target release input
         if: >-
           matrix.platform == 'linux' ||
-          github.event_name == 'workflow_dispatch'
+          github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'push' && needs.preflight.outputs.has_signing_secrets != 'true')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-input-${{ matrix.target }}
@@ -582,7 +598,8 @@ jobs:
     needs: [preflight, build]
     if: >-
       github.event_name == 'push' &&
-      startsWith(github.ref, 'refs/tags/v')
+      startsWith(github.ref, 'refs/tags/v') &&
+      needs.preflight.outputs.has_signing_secrets == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     environment:
@@ -1552,7 +1569,7 @@ jobs:
       needs.build.result == 'success' &&
       needs.flatpak.result == 'success' &&
       (
-        (github.event_name == 'push' && needs.sign.result == 'success') ||
+        (github.event_name == 'push' && (needs.sign.result == 'success' || needs.sign.result == 'skipped')) ||
         (github.event_name == 'workflow_dispatch' && needs.sign.result == 'skipped')
       )
     runs-on: ubuntu-22.04

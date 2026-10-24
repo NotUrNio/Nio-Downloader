@@ -265,6 +265,7 @@ modules:
         /run/build/niodownloader/finalize-target/$NIODOWNLOADER_RUST_TARGET/release/nio-finalize-fs
         packages/finalize-fs/dist/linux-$npm_config_target_arch/nio-finalize-fs
 
+      - node packages/mdxp/build.mjs
       - pnpm --config.verify-deps-before-run=false run build:builtin
       - pnpm --config.verify-deps-before-run=false run build:electron
       - pnpm --config.verify-deps-before-run=false run stage:electron --

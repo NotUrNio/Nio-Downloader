@@ -264,6 +264,12 @@ export async function prepareSnapProject({
       rm(path.join(stagedApp, 'chrome-sandbox'), { force: true }),
       rm(path.join(stagedApp, 'resources', 'app-update.yml'), { force: true }),
     ])
+    if (linuxExecutableName !== 'nio-downloader') {
+      await copyFile(
+        path.join(stagedApp, linuxExecutableName),
+        path.join(stagedApp, 'nio-downloader')
+      )
+    }
 
     await mkdir(stagedGui, { recursive: true })
     const template = await readFile(templatePath, 'utf8')
