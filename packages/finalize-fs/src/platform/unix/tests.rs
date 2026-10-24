@@ -7,10 +7,8 @@ use std::io;
 
 #[test]
 fn copy_staging_preserves_source_timestamps() {
-    let base = std::env::temp_dir().join(format!(
-        "nio-finalize-fs-copy-times-{}",
-        std::process::id()
-    ));
+    let base =
+        std::env::temp_dir().join(format!("nio-finalize-fs-copy-times-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
@@ -212,7 +210,8 @@ fn darwin_rename_is_no_replace_for_files_and_directories() {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn rename_only_handles_do_not_read_large_payloads_or_authorize_removal() {
-    let base = std::env::temp_dir().join(format!("niodownloader-rename-large-{}", std::process::id()));
+    let base =
+        std::env::temp_dir().join(format!("niodownloader-rename-large-{}", std::process::id()));
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
     let file = std::fs::File::create(base.join("source")).unwrap();
@@ -334,8 +333,10 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    let base =
-        std::path::Path::new(parent).join(format!("niodownloader-mounted-{}-{nonce}", std::process::id()));
+    let base = std::path::Path::new(parent).join(format!(
+        "niodownloader-mounted-{}-{nonce}",
+        std::process::id()
+    ));
     std::fs::create_dir(&base).unwrap();
     let root = open_root(base.to_str().unwrap()).unwrap();
     assert_eq!(
@@ -351,7 +352,9 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
     super::link_opened_no_replace(&artifact, &root, "target").unwrap();
     drop(artifact);
     assert_eq!(
-        std::fs::metadata(base.join("source.niodownloader")).unwrap().ino(),
+        std::fs::metadata(base.join("source.niodownloader"))
+            .unwrap()
+            .ino(),
         std::fs::metadata(base.join("target")).unwrap().ino()
     );
     let source = super::open_artifact_for_rename(&root, "source.niodownloader").unwrap();
@@ -392,8 +395,10 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
 fn competing_target_creation_never_overwrites_either_payload() {
     use std::io::Write;
     use std::sync::Barrier;
-    let base =
-        std::env::temp_dir().join(format!("niodownloader-rename-competition-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!(
+        "niodownloader-rename-competition-{}",
+        std::process::id()
+    ));
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
     let root = open_root(base.to_str().unwrap()).unwrap();

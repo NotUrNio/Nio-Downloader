@@ -358,8 +358,9 @@ mod tests {
     #[test]
     #[ignore = "requires NIODOWNLOADER_FINALIZE_EXFAT_ROOT on a disposable local exFAT volume"]
     fn exfat_reservations_preserve_conflicts_and_publish_held_files() {
-        let parent =
-            PathBuf::from(std::env::var("NIODOWNLOADER_FINALIZE_EXFAT_ROOT").expect("exFAT test root"));
+        let parent = PathBuf::from(
+            std::env::var("NIODOWNLOADER_FINALIZE_EXFAT_ROOT").expect("exFAT test root"),
+        );
         let dir = scratch(parent.clone());
         // Also exercise a held volume root, with names unique to this fixture.
         let root_name = dir.0.file_name().unwrap().to_str().unwrap().to_owned() + "-payload";
@@ -443,7 +444,8 @@ mod tests {
         assert_eq!(std::fs::read(dir.0.join("token")).unwrap(), b"download");
 
         std::fs::write(dir.0.join("conflict.niodownloader"), b"download").unwrap();
-        let source = super::super::open_artifact_for_rename(&root, "conflict.niodownloader").unwrap();
+        let source =
+            super::super::open_artifact_for_rename(&root, "conflict.niodownloader").unwrap();
         let (reserved, _) = reserve_exfat_target(&source, &root, "conflict", None, None).unwrap();
         std::fs::rename(dir.0.join("conflict"), dir.0.join("old-reservation")).unwrap();
         std::fs::write(dir.0.join("conflict"), b"other owner").unwrap();

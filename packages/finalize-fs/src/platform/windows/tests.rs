@@ -253,8 +253,9 @@ fn exfat_volume_root_and_nested_directory_support_no_replace_rename() {
     use std::os::windows::io::AsRawHandle;
     use windows_sys::Win32::Storage::FileSystem::GetVolumeInformationByHandleW;
 
-    let volume =
-        PathBuf::from(std::env::var("NIODOWNLOADER_FINALIZE_EXFAT_ROOT").expect("exFAT volume root"));
+    let volume = PathBuf::from(
+        std::env::var("NIODOWNLOADER_FINALIZE_EXFAT_ROOT").expect("exFAT volume root"),
+    );
     let (_, parts) = super::split_absolute_root(&volume).unwrap();
     assert!(parts.is_empty(), "test must include the volume root itself");
     let root = open_root(volume.to_str().unwrap()).expect("admit exFAT root without a file ID");
