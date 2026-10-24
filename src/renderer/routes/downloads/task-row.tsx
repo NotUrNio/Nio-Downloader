@@ -1,3 +1,4 @@
+import { Checkbox } from '@renderer/components/ui/checkbox'
 import { useByteFormat } from '@renderer/hooks/use-byte-format'
 import { resolveFailureReason } from '@renderer/lib/failure-reason'
 import { formatDurationHMS } from '@renderer/lib/format'
@@ -5,13 +6,14 @@ import { cn } from '@renderer/lib/utils'
 import type { DownloadTask } from '@shared/types/task'
 import { TaskStatus } from '@shared/types/task'
 import { getOutputSize } from '@shared/utils/media-progress'
-import { memo, type ReactNode } from 'react'
+import { memo, type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   defaultTaskColumns,
+  deriveTaskColumnModel,
   TASK_COLUMNS,
   type TaskColumn,
-  taskGridStyle,
+  type TaskColumnModel,
 } from './columns'
 import type { TaskSortColumn } from './sort'
 import { StatusPill } from './status-pill'
@@ -29,8 +31,10 @@ import { TaskTimestamp } from './task-timestamp'
 export interface TaskRowProps {
   task: DownloadTask
   columns?: TaskColumn[]
+  columnModel?: TaskColumnModel
   index?: number
   id?: string
+  selectionActive?: boolean
   rowProps: {
     selected: boolean
     focused: boolean
@@ -42,9 +46,11 @@ export interface TaskRowProps {
 function TaskRowBase({
   task,
   rowProps,
-  columns = defaultTaskColumns(),
+  columns,
+  columnModel: providedModel,
   index = 0,
   id,
+  selectionActive = false,
 }: TaskRowProps) {
   const { formatBytes, formatSpeed } = useByteFormat()
   const { t, i18n } = useTranslation()
@@ -70,6 +76,13 @@ function TaskRowBase({
       ? task.name.slice(extensionIndex)
       : ''
   const unknownMetric = <span className="text-muted-foreground">–</span>
+
+  const model = useMemo(
+    () =>
+      providedModel ?? deriveTaskColumnModel(columns ?? defaultTaskColumns()),
+    [providedModel, columns]
+  )
+
   const cells: Record<TaskSortColumn, ReactNode> = {
     name: (
       <span
@@ -116,6 +129,7 @@ function TaskRowBase({
       />
     ),
   }
+
   return (
     // biome-ignore lint/a11y/useSemanticElements: This row is positioned by the virtual ARIA grid.
     <div
@@ -132,23 +146,48 @@ function TaskRowBase({
       onClick={rowProps.onClick}
       onKeyDown={() => {}}
       title={failure?.technicalDetail ?? undefined}
-      className="downloads-task-row grid h-9 cursor-default select-none items-center px-3 text-xs"
-      style={taskGridStyle(columns)}
+      className={cn(
+        'group/row downloads-task-row grid cursor-default select-none items-center px-1 text-xs',
+        model.rowHeight === 32 ? 'h-8' : 'h-9'
+      )}
+      style={model.gridStyle}
     >
-      {columns.map((column, columnIndex) => (
+      {/* biome-ignore lint/a11y/useSemanticElements: Selection belongs to the virtual ARIA grid. */}
+      <div
+        role="gridcell"
+        tabIndex={-1}
+        aria-colindex={1}
+        className="flex items-center justify-center min-w-0"
+      >
+        <Checkbox
+          render={<button type="button" />}
+          nativeButton
+          aria-label={task.name}
+          checked={rowProps.selected}
+          onCheckedChange={rowProps.onCheckboxChange}
+          onClick={(event) => event.stopPropagation()}
+          className={cn(
+            'relative before:absolute before:-inset-2.5 transition-opacity duration-150',
+            !rowProps.selected &&
+              !selectionActive &&
+              'opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 group-focus-within/row:opacity-100'
+          )}
+        />
+      </div>
+      {model.visibleColumns.map((column, columnIndex) => (
         // biome-ignore lint/a11y/useSemanticElements: Grid cells belong to virtual rows rather than a native table.
         <div
           key={column.id}
           tabIndex={-1}
           role="gridcell"
-          aria-colindex={columnIndex + 1}
+          aria-colindex={columnIndex + 2}
           className={cn(
             'min-w-0 overflow-hidden px-2 tabular-nums',
             TASK_COLUMNS[column.id].numeric && 'text-end'
           )}
         >
           {TASK_COLUMNS[column.id].numeric ? (
-            <bdi>{cells[column.id]}</bdi>
+            <bdi>{cells[column.id] ?? ''}</bdi>
           ) : (
             cells[column.id]
           )}

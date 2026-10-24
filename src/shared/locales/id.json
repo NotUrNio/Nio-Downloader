@@ -7,7 +7,7 @@
     "submit": "Buka akses"
   },
   "operatorAdmin": {
-    "help": "Penggunaan:\n  nio-admin pairing pending [--json]\n  nio-admin pairing approve <user-code> [--json]\n  nio-admin pairing deny <user-code> [--json]\n\nPerintah ini hanya berkomunikasi dengan server Nio Downloader yang berjalan melalui loopback kontainer.",
+    "help": "Penggunaan:\n  nio-admin pairing pending [--json]\n  nio-admin pairing approve <user-code> [--json]\n  nio-admin pairing deny <user-code> [--json]\n  nio-admin extension pair\n\nPerintah ini hanya berkomunikasi dengan server Nio Downloader yang berjalan melalui loopback kontainer.",
     "errorPrefix": "nio-admin: {{message}}",
     "usageHint": "Jalankan `nio-admin --help` untuk petunjuk penggunaan.",
     "pending": {
@@ -55,6 +55,20 @@
         "loopback": "Server Nio Downloader yang berjalan tidak tersedia melalui loopback kontainer.",
         "approvalNotReady": "Persetujuan pemasangan belum siap pada server Nio Downloader yang berjalan."
       }
+    },
+    "extension": {
+      "heading": "Pending browser Extension pairing requests",
+      "identityNotice": "Verify that you initiated this request. Origin and claimed identity alone do not prove who is connecting. Terminal recording can capture the pairing code.",
+      "row": "{{index}}. {{browser}} [{{identity}}] Origin: {{origin}}; claimed ID: {{claimedId}}; Server: {{authority}}; {{seconds}} s remaining",
+      "select": "Enter the number of one request (Ctrl+C to exit): ",
+      "code": "Pairing code: {{code}}",
+      "instructions": "Type this code into the browser Extension. It expires at the original deadline. Ctrl+C closes this view without approving or denying the request.",
+      "none": "No pending Extension pairing requests. Start pairing in the Extension, then run this command again. If requests remain absent, check the remote Extension configuration.",
+      "ended": "The selected pairing request has ended. Check the Extension for its outcome.",
+      "ttyRequired": "Extension pairing requires interactive input, output and error terminals. Piping, redirection and JSON output are not supported.",
+      "cancelled": "Pairing code view closed. No approval or denial was sent.",
+      "invalidSelection": "Select exactly one listed request by its number.",
+      "unavailable": "The selected request expired, ended or changed. Start a new pairing attempt in the Extension."
     }
   },
   "common": {
@@ -109,7 +123,7 @@
     "newTask": "Tugas baru",
     "newTorrentTask": "Tugas torrent baru",
     "openTorrentFile": "Buka berkas torrent",
-    "showNioDownloader": "Tampilkan Nio Downloader",
+    "showNio Downloader": "Tampilkan Nio Downloader",
     "manual": "Panduan",
     "checkUpdates": "Periksa pembaruan",
     "preferences": "Pengaturan",
@@ -263,7 +277,7 @@
             "listening": "{{port}} (Menerima koneksi)",
             "occupied": "{{port}} (Sedang digunakan)"
           },
-          "nioEngine": "aria2 Nio Downloader",
+          "niodownloaderEngine": "aria2 Nio Downloader",
           "transport": {
             "websocket": "WebSocket"
           }
@@ -634,6 +648,7 @@
         }
       },
       "stats": {
+        "title": "Status transfer",
         "downSpeed": "Kecepatan unduh",
         "upSpeed": "Kecepatan unggah",
         "engineOk": "Mesin siap",
@@ -685,18 +700,17 @@
         },
         "activity": {
           "transferTitle": {
-            "session": "Transfer sesi",
+            "session": "Transfer terkini",
             "lifetime": "Transfer sepanjang waktu"
           },
           "download": "Unduh",
           "upload": "Unggah",
           "loading": "Memuat aktivitas…",
           "collecting": "Mengumpulkan data transfer…",
-          "noSessionHistory": "Belum ada transfer yang tercatat dalam sesi aplikasi ini.",
+          "noSessionHistory": "Belum ada transfer terkini yang tercatat.",
           "lifetimeEmpty": "Riwayat sepanjang waktu belum tersedia.",
           "noTraffic": "Tidak ada lalu lintas jaringan saat ini.",
           "unavailable": "Aktivitas sepanjang waktu tidak tersedia.",
-          "coverageGap": "Pelacakan terputus.",
           "retry": "Coba lagi",
           "notAvailable": "Tidak tersedia",
           "stale": {
@@ -705,7 +719,7 @@
           },
           "range": {
             "label": "Rentang waktu transfer",
-            "session": "Sesi (60 dtk)",
+            "session": "60 detik terakhir",
             "lifetime": "Sepanjang waktu",
             "latest": "60 detik terakhir",
             "adaptive_other": "Resolusi adaptif · {{count}} sampel"
@@ -758,7 +772,18 @@
             "accessibleSummary": "{{range}} dari {{start}} hingga {{end}}. Kecepatan terbaru: unduh {{download}}, unggah {{upload}}. Sepanjang waktu: unduh rata-rata {{average}}, unduh puncak {{peak}}, aktif {{activeDuration}}. {{sampleLabel}}. {{state}}",
             "activeSeconds_other": "{{count}} detik",
             "sampleCount_other": "{{count}} sampel",
-            "noDataQualityIssues": "Tidak ada peringatan pelacakan."
+            "noDataQualityIssues": "Tidak ada peringatan pelacakan.",
+            "noSamples": "Tidak ada sampel",
+            "overview": "Ringkasan riwayat",
+            "rangeStart": "Awal rentang",
+            "rangeEnd": "Akhir rentang",
+            "earlier": "Riwayat lebih lama",
+            "later": "Riwayat lebih baru",
+            "zoomIn": "Perbesar",
+            "zoomOut": "Perkecil",
+            "showAll": "Tampilkan semua",
+            "following": "Mengikuti data terbaru",
+            "followLatest": "Kembali ke terbaru"
           }
         },
         "pieces": {
@@ -890,12 +915,21 @@
         "removeMixedTitle": "Hapus {{count}} tugas dari daftar?",
         "openFile": "Buka berkas",
         "openFileFailed": "Berkas tidak dapat dibuka",
+        "openFileAppFailed": "Sistem tidak dapat membuka berkas ini. Pastikan aplikasi default masih terpasang, atau buka folder untuk memilih aplikasi lain.",
+        "openFileFailedHint": "Pastikan berkas masih ada dan Anda memiliki izin untuk membukanya.",
         "chooseFiles": "Pilih berkas…",
         "queueOrder": "Urutan unduhan",
         "moveQueueTop": "Pindahkan ke depan",
         "moveQueueBottom": "Pindahkan ke belakang",
         "copyError": "Salin informasi kesalahan",
-        "errorReport": "{{name}}\nID tugas: {{id}}\n{{details}}"
+        "errorReport": "{{name}}\nID tugas: {{id}}\n{{details}}",
+        "redownload": "Re-download",
+        "redownloadWithDialog": "Re-download with options... (Alt+Click)",
+        "redownloadTooltipBatch": "Re-download {{n}} of {{total}} selected",
+        "redownloadOverwriteTitle": "File Already Exists",
+        "redownloadOverwriteDescription": "“{{name}}” already exists in the download directory. Re-downloading will overwrite or rename it. Do you want to continue?",
+        "redownloadCredentialsExpired": "Original request options have expired. Please review and submit.",
+        "redownloadStarted": "Re-download started"
       },
       "titleCount": "{{shown}} ditampilkan · {{total}} total",
       "type": {
@@ -1107,7 +1141,7 @@
     },
     "recovery": {
       "toast": "{{count}} tugas yang terputus dipulihkan. Klik untuk meninjau.",
-      "finalizeRenameFailed": "Gagal mengganti nama berkas. Berkas unduhan tetap memiliki akhiran .nio.",
+      "finalizeRenameFailed": "Gagal mengganti nama berkas. Berkas unduhan tetap memiliki akhiran .niodownloader.",
       "reseedFailed": "Unduhan selesai, tetapi seeding gagal dimulai.",
       "metaMissing": "Metadata torrent tidak ada. Seeding tidak dapat dimulai.",
       "startup": {
@@ -1324,7 +1358,15 @@
         "historyCountHint": "Catatan pemulihan yang lebih lama akan dihapus.",
         "historyCountPositive": "Masukkan angka yang lebih besar dari 0."
       },
-      "description": "RPC, progres, dan pemulihan"
+      "description": "RPC, progres, dan pemulihan",
+      "configFile": {
+        "title": "File konfigurasi",
+        "serverTitle": "File konfigurasi server",
+        "openDirectory": "Buka folder",
+        "copyPath": "Salin lokasi",
+        "copied": "Disalin",
+        "actionFailed": "Tindakan tidak dapat diselesaikan. Coba lagi."
+      }
     },
     "about": {
       "appIconAlt": "Ikon aplikasi Nio Downloader",
@@ -1389,9 +1431,9 @@
         "plugins": "Plugin",
         "changelog": "Riwayat perubahan",
         "website": "Situs resmi",
-        "websiteDescription": "Kunjungi github.com/NotUrNio/Nio-Downloader",
+        "websiteDescription": "Kunjungi niodownloader.app",
         "acknowledgments": "Ucapan terima kasih",
-        "acknowledgmentsDescription": "Lihat kontributor dan pendukung proyek di github.com/NotUrNio/Nio-Downloader"
+        "acknowledgmentsDescription": "Lihat kontributor dan pendukung proyek di niodownloader.app"
       }
     },
     "bittorrent": {
@@ -1516,10 +1558,7 @@
         "split": "Koneksi maksimum per berkas",
         "splitDesc": "Koneksi yang digunakan untuk mengunduh satu berkas.",
         "minSplitSize": "Ukuran segmen minimum ({{unit}})",
-        "minSplitSizeDesc": "Segmen di bawah 2× ukuran ini tidak akan dibagi.",
-        "maxSpeed": "Kecepatan maksimum",
-        "maxSpeedDesc": "Menggunakan koneksi paralel dan segmen maksimum untuk throughput tertinggi.",
-        "maxSpeedNotice": "Kecepatan sebenarnya dibatasi oleh server; beberapa server menolak banyak koneksi."
+        "minSplitSizeDesc": "Segmen di bawah 2× ukuran ini tidak akan dibagi."
       },
       "reliability": {
         "title": "Koneksi dan percobaan ulang",
@@ -1575,6 +1614,7 @@
         "turtle_off": "Standar",
         "turtle_on": "Kecepatan rendah",
         "turtle_auto": "Otomatis",
+        "unitFor": "Satuan untuk {{field}}",
         "baseSection": "Batas standar",
         "baseSectionDesc": "Digunakan untuk unduhan sehari-hari dan dipatuhi dalam semua mode.",
         "baseDownload": "Unduh",
@@ -1644,7 +1684,7 @@
         "estimateSuccess": "Bandwidth koneksi diisi berdasarkan kecepatan terbaru.",
         "estimateError": "Riwayat kecepatan terbaru tidak dapat dibaca. Masukkan bandwidth secara manual.",
         "headroomPercent": "Cadangan untuk aplikasi lain",
-        "headroomPercentDesc": "Saat ini dicadangkan {{reserved}}%; Nio Downloader dapat menggunakan hingga {{nio}}%.",
+        "headroomPercentDesc": "Saat ini dicadangkan {{reserved}}%; Nio Downloader dapat menggunakan hingga {{niodownloader}}%.",
         "effect": {
           "title": "Efek saat ini",
           "standard": "Menggunakan batas standar: unduh {{download}}, unggah {{upload}}.",
@@ -1659,7 +1699,7 @@
           "autoRules": "Nio Downloader akan {{rules}}.",
           "lowerWins": "Batas aktif terendah yang berlaku."
         },
-        "bandwidthUsed": "Nio Downloader dapat menggunakan hingga {{nio}}%.",
+        "bandwidthUsed": "Nio Downloader dapat menggunakan hingga {{niodownloader}}%.",
         "bandwidthPending": "Masukkan kedua kecepatan koneksi untuk menerapkan batas ini."
       },
       "newTasks": "Tugas baru",
@@ -1695,7 +1735,7 @@
         "hidePassword": "Sembunyikan kata sandi",
         "bypass": "Hubungkan langsung ke",
         "bypassDesc": "Satu domain, IP, atau CIDR per baris. Awali dengan . untuk mencocokkan subdomain saja. Unduhan berkas tidak mendukung karakter pengganti *.",
-        "bypassScopeNote": "Hanya unduhan berkas dan pembaruan aplikasi",
+        "bypassScopeNote": "Hanya unduhan, plugin, dan pembaruan aplikasi",
         "scopes": "Gunakan proxy untuk",
         "scopesDesc": "Pilih jenis lalu lintas yang melalui proxy.",
         "scopeDownload": "Unduhan berkas",
@@ -1711,7 +1751,9 @@
         "scopeHint": "Peer BT, DHT, dan pelacak UDP terhubung langsung.",
         "scopeNone": "Belum ada yang dipilih",
         "scopeChoose": "Pilih…",
-        "scopeSeparator": ", "
+        "scopeSeparator": ", ",
+        "scopePlugins": "Instalasi dan pembaruan plugin",
+        "scopePluginsDesc": "Gunakan proksi untuk katalog, paket, pembaruan, dan permintaan kebijakan keamanan plugin."
       },
       "nat": {
         "title": "Pemetaan port (NAT)",
@@ -1922,10 +1964,10 @@
             "permission": "Pengelola paket tidak dapat menulis ke lokasi pemasangan globalnya. Gunakan pengelola versi Node.js atau prefiks yang dapat ditulis oleh akun Anda; jangan gunakan sudo.",
             "network": "Pengelola paket tidak dapat menjangkau registri. Periksa jaringan atau konfigurasi registri, lalu coba lagi.",
             "timeout": "Pemasangan terlalu lama dan telah dihentikan. Periksa jaringan, lalu coba lagi.",
-            "pathMissing": "Paket telah dipasang, tetapi nio tidak ada dalam PATH. Buka terminal baru atau tambahkan direktori pemasangan yang dilaporkan ke PATH.",
-            "pathShadowed": "Berkas eksekusi nio lain ditemukan lebih awal dalam PATH. Hapus entri lama atau perbaiki PATH, lalu periksa lagi.",
-            "verifyFailed": "Pemasang selesai, tetapi Nio Downloader tidak dapat memverifikasi berkas eksekusi nio yang aktif.",
-            "installFailed": "Pengelola paket tidak dapat memasang @nio/cli. Periksa detailnya, lalu coba lagi atau jalankan perintah secara manual.",
+            "pathMissing": "Paket telah dipasang, tetapi niodownloader tidak ada dalam PATH. Buka terminal baru atau tambahkan direktori pemasangan yang dilaporkan ke PATH.",
+            "pathShadowed": "Berkas eksekusi niodownloader lain ditemukan lebih awal dalam PATH. Hapus entri lama atau perbaiki PATH, lalu periksa lagi.",
+            "verifyFailed": "Pemasang selesai, tetapi Nio Downloader tidak dapat memverifikasi berkas eksekusi niodownloader yang aktif.",
+            "installFailed": "Pengelola paket tidak dapat memasang nio-cli. Periksa detailnya, lalu coba lagi atau jalankan perintah secara manual.",
             "unknown": "Nio Downloader tidak dapat memeriksa alat baris perintah. Coba lagi atau jalankan perintah yang disalin secara manual."
           }
         },
@@ -2016,7 +2058,7 @@
         "candidateKind": {
           "manual": "Jalur khusus",
           "userData": "Direktori data Nio Downloader",
-          "env": "NIO_FFMPEG_BIN",
+          "env": "NIODOWNLOADER_FFMPEG_BIN",
           "path": "PATH sistem"
         },
         "state": {
@@ -2053,7 +2095,7 @@
         "prompt": {
           "title": "Integrasikan Nio Downloader dengan desktop?",
           "message": "Izinkan AppImage Nio Downloader ini mendaftar pada lingkungan desktop Anda?",
-          "detail": "Nio Downloader akan menambahkan entri desktop dan ikon dalam direktori data pengguna, lalu mendaftarkan dirinya untuk membuka tautan nio:, tautan magnet, dan berkas .torrent. Dengan demikian, browser dan ekstensi Nio Downloader dapat menjalankan Nio Downloader dan meneruskan unduhan kepadanya. Tidak ada yang ditulis di luar direktori home Anda, dan tindakan ini dapat dibatalkan dari Pengaturan.",
+          "detail": "Nio Downloader akan menambahkan entri desktop dan ikon dalam direktori data pengguna, lalu mendaftarkan dirinya untuk membuka tautan niodownloader:, tautan magnet, dan berkas .torrent. Dengan demikian, browser dan ekstensi Nio Downloader dapat menjalankan Nio Downloader dan meneruskan unduhan kepadanya. Tidak ada yang ditulis di luar direktori home Anda, dan tindakan ini dapat dibatalkan dari Pengaturan.",
           "accept": "Integrasikan",
           "decline": "Nanti saja"
         },
@@ -2310,6 +2352,8 @@
       "local": "Berkas lokal",
       "local.pick": "Pilih berkas .moext",
       "lead": "Tempelkan alamat plugin, pilih berkas .moext, atau letakkan berkas pada kolom isian.",
+      "reviewLead": "Tinjau izin plugin sebelum memasang.",
+      "preparing": "Menyiapkan…",
       "placeholder": "Tempelkan alamat GitHub, URL, atau pilih berkas .moext lokal",
       "detected": {
         "auto": "Otomatis",
@@ -2328,7 +2372,15 @@
       "localPrepareFailed": "Berkas plugin ini tidak dapat disiapkan: {{detail}}",
       "dropHint": "Letakkan berkas .moext di sini untuk memeriksa plugin",
       "dragDisabledHint": "Seret dan lepas tidak didukung dalam lingkungan ini. Gunakan alamat GitHub atau URL.",
-      "warning": "Sebelum memasang: lanjutkan hanya jika Anda memercayai pembuatnya dan penggunaan akses yang tercantum di atas sesuai dengan yang Anda harapkan."
+      "warning": "Sebelum memasang: lanjutkan hanya jika Anda memercayai pembuatnya dan penggunaan akses yang tercantum di atas sesuai dengan yang Anda harapkan.",
+      "officialVerified": "Tanda tangan resmi Nio Downloader terverifikasi",
+      "officialSignatureInvalid": "Tanda tangan resmi plugin tidak dapat diverifikasi. Coba segarkan katalog plugin.",
+      "officialBuiltinOnly": "Versi ini memerlukan hak akses plugin bawaan. Instal versi lebih baru yang mendukung instalasi opsional.",
+      "builtinAlreadyInstalled": "Plugin ini sudah menjadi bawaan. Gunakan tindakan pembaruannya.",
+      "hostIncompatible": "Plugin ini memerlukan Nio Downloader {{required}}; versi saat ini: {{current}}. Tingkatkan atau beralih ke versi Nio Downloader yang kompatibel, lalu coba lagi.",
+      "installed": "Terpasang",
+      "optionalHint": "Nonaktif secara default; aktifkan jika perlu",
+      "optionalLater": "Anda dapat mengubah izin opsional di pengaturan plugin setelah pemasangan."
     },
     "consent": {
       "installTitle": "Pasang {{name}} {{version}}?",
@@ -2394,12 +2446,16 @@
       "accessHosts_other": "Dapat membaca {{count}} situs web",
       "accessBroad": "Dapat membaca situs web mana pun",
       "attentionTitle": "Plugin ini melaporkan masalah",
+      "runtimeStartFailed": "Lingkungan eksekusi plugin tidak dapat dimulai",
+      "runtimeFailed": "Lingkungan eksekusi plugin berhenti secara tidak terduga",
       "attentionGeneric": "Lihat log untuk detailnya.",
       "viewIssue": "Lihat masalah",
       "removeTitle": "Hapus plugin",
       "removeDesc": "Menghapus plugin ini juga menghapus datanya yang tersimpan di Nio Downloader.",
       "uninstallConfirmTitle": "Copot {{name}}?",
-      "uninstallConfirmDesc": "Plugin dan pengaturannya yang tersimpan akan dihapus dari Nio Downloader."
+      "uninstallConfirmDesc": "Plugin dan pengaturannya yang tersimpan akan dihapus dari Nio Downloader.",
+      "operations": "Operations",
+      "operationsFailed": "The operation panel could not load. Try again."
     },
     "permissions": {
       "empty": "Plugin ini tidak meminta izin apa pun.",
@@ -2419,8 +2475,9 @@
         "error": "Kesalahan",
         "fatal": "Fatal"
       },
-      "copy": "Salin",
+      "copy": "Salin log tersamarkan",
       "clear": "Hapus",
+      "clearFailed": "Tidak dapat menghapus log. Coba lagi.",
       "output": "Keluaran langsung",
       "entryCount_other": "{{count}} entri",
       "empty": "Belum ada entri log",
@@ -2436,7 +2493,7 @@
       "requires": "Memerlukan Nio Downloader {{range}}",
       "notInstalled": "Belum terpasang",
       "notFound": "Plugin “{{id}}” tidak ditemukan di registri",
-      "viewOnWebsite": "Lihat di github.com/NotUrNio/Nio-Downloader",
+      "viewOnWebsite": "Lihat di niodownloader.app",
       "updated": "diperbarui {{date}}",
       "featuresTitle": "Fungsinya",
       "permissionsTitle": "Izin",
@@ -2614,7 +2671,8 @@
       },
       "ffmpeg": {
         "strong": "Gunakan FFmpeg",
-        "plain": "Memproses audio atau video."
+        "plain": "Memproses audio atau video.",
+        "requirement": "Processes audio or video. First, <settings>install or select FFmpeg in Settings</settings>."
       },
       "notify": {
         "strong": "Kirim notifikasi",
@@ -2666,7 +2724,43 @@
         "allowed": "Diizinkan",
         "noAccess": "Nonaktif",
         "grant": "Izinkan"
+      },
+      "metadata": {
+        "strong": "Membaca dan menulis metadata tugas",
+        "plain": "Menyimpan informasi yang dibuat plugin ini untuk tugas unduhan."
+      },
+      "files.selected.read": {
+        "strong": "Read files selected for this operation",
+        "plain": "Each operation needs your input selection. Other files are not authorized."
+      },
+      "files.selected.write": {
+        "strong": "Save a new file for this operation",
+        "plain": "Save at the location you confirm without replacing existing files."
       }
+    },
+    "security": {
+      "blocked": "Diblokir demi keamanan",
+      "pending": "Hubungkan ke internet dan periksa pembaruan sebelum mengaktifkan plugin ini.",
+      "unavailable": "Kebijakan keamanan tidak dapat diverifikasi. Periksa pembaruan untuk mencoba lagi.",
+      "malware": "Plugin ini teridentifikasi berbahaya.",
+      "vulnerability": "Versi plugin ini memiliki kerentanan keamanan.",
+      "compromised": "Saluran distribusi plugin ini telah disusupi.",
+      "fixedVersion": "Perbaikan tersedia pada versi {{version}}.",
+      "details": "Lihat pemberitahuan keamanan"
+    },
+    "network": {
+      "timeout": "Waktu koneksi habis",
+      "dns": "Pencarian DNS gagal",
+      "proxyAuth": "Autentikasi proksi gagal",
+      "proxyConnect": "Tidak dapat terhubung ke proksi",
+      "certificate": "Kesalahan sertifikat atau TLS",
+      "http": "HTTP {{status}}",
+      "cancelled": "Permintaan dibatalkan",
+      "network": "Permintaan jaringan gagal",
+      "cached": "Penyegaran gagal; menampilkan plugin dari cache",
+      "unavailable": "Tidak dapat memuat katalog plugin",
+      "direct": "Koneksi langsung ke {{host}} gagal: {{reason}}",
+      "viaProxy": "Koneksi ke {{host}} melalui proksi {{proxy}} gagal: {{reason}}"
     }
   },
   "plugin": {
@@ -2679,9 +2773,13 @@
         "title": "Kebutuhan FFmpeg",
         "notInstalled": "FFmpeg belum terpasang pada sistem ini.",
         "versionMismatch": "FFmpeg {{version}} terpasang.",
-        "requiredByPlugin": "Plugin ini memerlukan ffmpeg. Pasang dan coba lagi.",
+        "requiredByPlugin": "Anda dapat memasang plugin sekarang. Konfigurasikan FFmpeg yang kompatibel sebelum mengaktifkan atau menjalankan plugin.",
         "optionalDegraded": "Fitur media plugin ini tidak tersedia hingga ffmpeg dipasang."
       }
+    },
+    "runtime": {
+      "ffmpegUnavailable": "FFmpeg tidak tersedia. Configure FFmpeg in Settings → Integration → Media Tools.",
+      "ffmpegIncompatible": "Versi FFmpeg tidak memenuhi persyaratan plugin ini. Configure FFmpeg in Settings → Integration → Media Tools."
     }
   },
   "bridge": {
@@ -2710,6 +2808,10 @@
     "disclaimer": {
       "title": "Pemberitahuan penggunaan",
       "language": "Bahasa",
+      "languages": {
+        "english": "English",
+        "chinese": "简体中文"
+      },
       "summary": "Baca informasi berikut sebelum melanjutkan.",
       "body": "Nio Downloader hanya menyediakan pengelolaan unduhan. Nio Downloader tidak menyediakan, menyimpan, menghosting, atau merekomendasikan konten untuk diunduh. Anda harus memastikan bahwa setiap tindakan mengakses, menggunakan, atau membagikan konten melalui Nio Downloader memiliki izin yang sah dan mematuhi hukum hak cipta serta hukum lain yang berlaku. Anda bertanggung jawab atas segala konsekuensi dari mengunduh, menggunakan, atau membagikan konten. Dengan memilih “Setuju dan lanjutkan”, Anda menyatakan telah membaca dan memahami pemberitahuan ini.",
       "highlights": {
@@ -2824,7 +2926,9 @@
       "invalidName": "Masukkan nama folder yang valid.",
       "tooLarge": "Jalur atau nama folder ini terlalu panjang.",
       "unavailable": "Server tidak dapat menyelesaikan permintaan ini. Coba lagi.",
-      "creationOutcomeUnknown": "Pembuatan folder belum dapat dikonfirmasi. Muat ulang untuk memeriksa sebelum membuat folder lain di sini."
+      "creationOutcomeUnknown": "Pembuatan folder belum dapat dikonfirmasi. Muat ulang untuk memeriksa sebelum membuat folder lain di sini.",
+      "notFile": "Select a readable regular file.",
+      "unsupportedFileType": "This file extension is not supported."
     },
     "places": {
       "common": "Lokasi umum",
@@ -2836,6 +2940,33 @@
       "downloads": "Unduhan",
       "root": "Sistem berkas",
       "loadFailed": "Beberapa lokasi folder tidak dapat dimuat."
+    },
+    "openFileTitle": "Select a file",
+    "saveFileTitle": "Save a file",
+    "fileDescription": "Browse files on the Nio Downloader server.",
+    "selectFile": "Select file",
+    "saveFile": "Use this filename",
+    "files": "Files and folders",
+    "fileName": "File name",
+    "emptyFiles": "This folder is empty.",
+    "fileErrors": {
+      "invalidPath": "Enter a valid absolute path.",
+      "outsideRoots": "This path is outside the allowed locations.",
+      "notFound": "This path no longer exists.",
+      "permissionDenied": "You do not have permission to use this path.",
+      "invalidName": "Enter a valid file name.",
+      "tooLarge": "This path or file name is too long."
+    },
+    "selectedFilePath": "Selected file",
+    "file": {
+      "chooseOnServer": "Choose a file on the server using this picker.",
+      "singleFile": "Choose one file at a time.",
+      "wrongType": "Choose a file with one of these extensions: {{extensions}}.",
+      "pathUnavailable": "This file’s location is unavailable. Click to choose it instead.",
+      "choose": "Choose a file",
+      "dropHint": "Drop a file here or click to choose",
+      "browseHint": "Click to browse files",
+      "change": "Click to replace"
     }
   },
   "directoryPreferences": {
@@ -2903,5 +3034,320 @@
     "waitingMerged": "Tugas menunggu kini ditampilkan di Aktif. Tampilan Aktif telah dibuka.",
     "stoppedSplit": "Tugas yang dihentikan dikelompokkan ke Selesai dan Galat. Semua unduhan telah dibuka.",
     "invalidStatus": "Kategori unduhan tidak valid. Semua unduhan telah dibuka."
+  },
+  "mediaMerge": {
+    "title": "Merge audio and video",
+    "description": "Combine two files without re-encoding. Original files are kept. Audio-only and video-only inputs are detected automatically.",
+    "videoInput": "Video file",
+    "audioInput": "Audio file",
+    "output": "Output file",
+    "provider": "Plugin",
+    "browse": "Browse…",
+    "browseField": "Browse {{field}}",
+    "required": "Choose a file or enter its full path.",
+    "outputHint": "Use a new .mp4 or .mkv filename. Existing files are never overwritten. If the codecs cannot be copied to MP4, try MKV.",
+    "noPlugin": "Install and enable a media merge plugin. FFmpeg must be configured in Settings > Integration > Media Tools.",
+    "serverPaths": "Select files on the Nio Downloader server. Files on this computer are not uploaded.",
+    "start": "Merge",
+    "running": "Merging…",
+    "cancelling": "Cancelling…",
+    "completed": "Merged successfully",
+    "cancelled": "Merge cancelled",
+    "failed": "Merge failed",
+    "invalidSelection": "Select two completed, single-file downloads.",
+    "jobMissing": "This merge is no longer available.",
+    "busy": "Another merge is already running.",
+    "pluginUnavailable": "The media merge plugin is unavailable.",
+    "absolutePaths": "Enter full, absolute file paths.",
+    "invalidFiles": "Choose two non-empty media files.",
+    "sameInput": "Choose two different input files.",
+    "outputFormat": "Use an .mp4 or .mkv output filename.",
+    "outputExists": "The output already exists. Choose a new filename.",
+    "invalidOutput": "The plugin did not produce a valid output file.",
+    "again": "Merge another file",
+    "pluginDisabled": "Enable this plugin to merge files.",
+    "choose": {
+      "videoInput": "Choose video",
+      "audioInput": "Choose audio",
+      "output": "Choose a save location"
+    },
+    "hint": {
+      "videoInput": "The picture for your merged file",
+      "audioInput": "The sound for your merged file",
+      "output": "Save as MP4 or MKV"
+    },
+    "preserveOriginals": "Original files are kept",
+    "format": "Output format"
+  },
+  "legacyImport": {
+    "navigation": "Migration",
+    "title": "Migration",
+    "pausedDescription": "Choose which Nio Downloader v1 downloads to import. They won’t start automatically.",
+    "settingsTitle": "Migration",
+    "settingsDescription": "Import your downloads from Nio Downloader v1.",
+    "settingsAction": "Open migration",
+    "pickSource": "Choose the Nio Downloader v1 data folder",
+    "source": "From",
+    "changeSource": "Change folder…",
+    "noSource": "Choose the folder containing your Nio Downloader v1 data",
+    "discovery": "Downloads found: {{count}}",
+    "preserveFiles": "Downloaded files stay in their original location.",
+    "chooseTasks": "Choose downloads",
+    "skip": "Not now",
+    "skippedHint": "Anda dapat melakukan migrasi nanti melalui {{settings}} → {{advanced}}.",
+    "back": "Back",
+    "loading": "Looking for your old downloads…",
+    "empty": "There are no tasks to migrate from this folder.",
+    "continueBefore": "Before continuing:",
+    "capabilityLimit": "This task needs to be downloaded again. Choose a new folder to keep the original files.",
+    "running": "Nio Downloader v1 may still be running. Quit it, then check again.",
+    "recheck": "Check again",
+    "search": "Search downloads",
+    "selectAll": "Select all",
+    "skipped": "Skipped: {{count}}",
+    "backupNote": "Your task list is backed up before import. Downloaded files stay in place.",
+    "backingUp": "Backing up your task list…",
+    "committing": "Adding your downloads…",
+    "progress": "Migration progress",
+    "processed": "{{done}} / {{total}} processed",
+    "stop": "Stop migration",
+    "stopTitle": "Stop migration?",
+    "stopDescription": "Downloads already imported will be kept. You can import the rest later.",
+    "resultTitle": "Migration complete",
+    "importedCount": "Imported {{count}}",
+    "resultDescription": "Your imported tasks are now in Downloads.",
+    "details": "View details",
+    "exportReport": "Save report…",
+    "retry": "Migrate remaining",
+    "viewTasks": "View downloads",
+    "freshDownload": "Download again…",
+    "freshDescription": "Choose where to save the new download. Nio Downloader will create a separate folder and open the download form for you to confirm. It will start from the beginning and leave your old files untouched.",
+    "freshDestination": "Choose where to save the new download",
+    "chooseDestination": "Choose another location…",
+    "reasons": {
+      "fresh-download-required": "Needs a new download",
+      "verification-required": "Existing files need checking",
+      "metadata-required": "Original torrent file needed",
+      "selection-required": "Choose which files to download",
+      "unsupported-options": "Download details need checking",
+      "invalid-record": "Couldn’t read this task",
+      "unsafe-path": "File location needs checking",
+      "already-imported": "Already imported",
+      "deleted-import": "Previously removed",
+      "path-conflict": "Another task uses this location",
+      "changed-source": "Old task data has changed",
+      "not-selected": "Not selected",
+      "stopped": "Not imported before stopping",
+      "commit-failed": "Import failed. You can try again."
+    },
+    "errors": {
+      "pageUnavailable": "Migration couldn’t open. Restart Nio Downloader and try again. Downloads already imported are kept.",
+      "failed": "The operation couldn’t be completed. Please try again.",
+      "consentRequired": "Accept the agreement before opening migration.",
+      "invalidSource": "No Nio Downloader v1 data was found here. Choose its original data folder.",
+      "unsafeSource": "This data folder can’t be read safely. Choose the original Nio Downloader v1 folder.",
+      "unsafeBackup": "A safe backup couldn’t be created, so importing has stopped.",
+      "tooLarge": "This task list is too large to import.",
+      "tooManySources": "Too many folders have been opened. Restart Nio Downloader and try again.",
+      "sourceNotAuthorized": "Select the old data folder using the folder picker.",
+      "expiredPreview": "This task list needs refreshing. Check again before importing.",
+      "changedSource": "The old task data has changed. Check again before importing.",
+      "running": "Nio Downloader v1 may still be running. Quit it, then check again.",
+      "invalidSelection": "The selected tasks have changed. Check the list again.",
+      "pathConflict": "Another task uses this file location. Check the list again.",
+      "busy": "An import is already running. Wait for it to finish.",
+      "unknownRun": "The import result is unavailable.",
+      "unknownTask": "This imported task is no longer available.",
+      "rescanRequired": "Choose the data folder again to import the remaining tasks.",
+      "metadataRequired": "Choose this task’s original torrent file first.",
+      "unsafePath": "Choose a folder you can access.",
+      "mirrorsUnsupported": "This task uses multiple download links. Copy the link you want to use and add a new download.",
+      "stopping": "Nio Downloader is closing. Reopen it to continue importing.",
+      "desktopOnly": "Open migration in the Nio Downloader desktop app.",
+      "metadataMismatch": "This torrent does not match the old task. Choose its original torrent file.",
+      "checkpointUnavailable": "This version can’t resume the old files. You can download again in a new folder.",
+      "activationSourceMissing": "Some original task information is missing. Download again in a new folder.",
+      "selectionRequired": "The previous file selection is unavailable. Choose the files again in a new download.",
+      "originalDirectoryRequired": "Choose the original folder shown here. Files moved to another location can’t be resumed.",
+      "payloadMissing": "Some original files are missing, including files previously left unselected. All are needed to resume this task. Download again in a new folder.",
+      "payloadUnsafe": "The original files can’t be updated safely because of file links or permissions. Keep them and download again in a new folder.",
+      "controlRequired": "The saved download progress is missing. Download again in a new folder.",
+      "activationUncertain": "Nio Downloader couldn’t safely resume this task. The original files are protected. You can download again in a new folder."
+    },
+    "resultIncompleteTitle": "Migration is incomplete",
+    "resultStoppedTitle": "Migration stopped",
+    "activationRequired": "Download again in a new folder to keep the original files.",
+    "chooseTorrent": "Choose torrent…",
+    "torrentFile": "Torrent file",
+    "verifyAndContinue": "Verify and continue",
+    "verifyDescription": "Nio Downloader will verify the original files, then continue with your previous file selection. While downloading, it may upload data and write shared pieces to unselected files. It won’t seed automatically when finished.",
+    "authorizeOriginalDirectory": "Choose the original download folder",
+    "verifyReady": "Verify your existing files to continue this download, or start again in a new folder.",
+    "trackersReadOnly": "This download keeps its original trackers. They can’t be changed here.",
+    "page": {
+      "stepsLabel": "Migration steps",
+      "steps": {
+        "select": "Choose downloads",
+        "import": "Import",
+        "result": "Review"
+      },
+      "foundSummary": "Download types",
+      "selectionSummary": "Selected",
+      "resultSummary": "Migration summary",
+      "countUnit": "total",
+      "notImported": "Not imported",
+      "skippedSummary": "Skipped",
+      "types": {
+        "http": "Direct links",
+        "bt": "Torrents",
+        "magnet": "Magnet links",
+        "unknown": "Other tasks"
+      },
+      "pathUnavailable": "Download location unavailable",
+      "filesStayTitle": "Your files stay where they are",
+      "filesStayDescription": "Migration won’t move or delete downloaded files.",
+      "nextTitle": "Only your downloads",
+      "nextDescription": "Your app settings stay the same.",
+      "footerNote": "Imported tasks will stay paused.",
+      "discoveryDescription": "Choose what to add to your download list. Some tasks need a new download or a check of the existing files.",
+      "previousVersion": "Nio Downloader v1",
+      "currentVersion": "Nio Downloader",
+      "introduction": "Choose the downloads you’d like to add to Nio Downloader.",
+      "selectionTitle": "Choose what to migrate",
+      "searchEmpty": "No matching downloads.",
+      "resultEmptyTitle": "No new downloads",
+      "resultEmptyDescription": "Open the details to see why each task was skipped.",
+      "resultIncompleteDescription": "Downloads already imported are kept. Review the details and try importing the rest again.",
+      "resultStoppedDescription": "Downloads already imported are kept. You can import the rest when you’re ready.",
+      "outcomes": {
+        "imported": "Imported",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "unprocessed": "Not imported"
+      },
+      "sourceDescription": "From {{name}}",
+      "assistantTitle": "Migration Assistant",
+      "backToSource": "Back to source",
+      "continue": "Continue",
+      "revealSource": "Show in folder",
+      "welcomeTitle": "Migrate your downloads",
+      "sourceFeedback": {
+        "retry": "Try again",
+        "unreadableTitle": "Unable to read downloads from this location",
+        "chooseFolder": "Choose the data folder used by the previous version of Nio Downloader.",
+        "readTitle": "Unable to read downloads",
+        "readDescription": "Check that this location is accessible, then try again.",
+        "pickTitle": "Unable to use the selected folder",
+        "pickDescription": "Try choosing the folder again. Your previous selection is still available.",
+        "revealTitle": "Unable to show this folder",
+        "revealDescription": "Check that this location is accessible, then try again.",
+        "discoverTitle": "Unable to look for previous downloads",
+        "discoverDescription": "Try again, or choose the previous Nio Downloader data folder yourself.",
+        "reading": "Reading downloads…"
+      },
+      "sourceTitle": "Where would you like to migrate from?",
+      "sourceIntroduction": "Import your download tasks from the previous version of Nio Downloader. You can choose what to migrate next. Your downloaded files will stay where they are.",
+      "sourceKind": "Downloads from the previous version",
+      "sourceHelp": "Choose the data folder used by Nio Downloader v1. Your downloaded files stay where they are.",
+      "noSourceDescription": "No downloads from the previous version of Nio Downloader were found. Choose another location to look for them.",
+      "progressTitle": "Migrating your downloads",
+      "progressDescription": "Your task list is being backed up and added to Nio Downloader.",
+      "selectGroup": "Select {{name}}",
+      "phases": {
+        "discovery": "Choose source",
+        "selection": "Choose content",
+        "progress": "Migration",
+        "result": "Result"
+      },
+      "groups": {
+        "http": "Direct links",
+        "bt": "Torrent downloads",
+        "magnet": "Magnet links",
+        "unknown": "Other downloads"
+      },
+      "groupDescriptions": {
+        "http": "A new download is needed",
+        "bt": "Existing files will be checked before continuing",
+        "magnet": "The original torrent file is needed",
+        "unknown": "Review the task details"
+      },
+      "groupCount_other": "{{count}} tasks",
+      "selectedNote_other": "Selected {{count}} tasks. After migration, tasks will stay paused and downloaded files will remain in place.",
+      "run": {
+        "backup": "Back up task list",
+        "backupActive": "Saving a copy of your previous task list…",
+        "backupDone": "Backup saved",
+        "add": "Add downloads",
+        "waiting": "Waiting for the backup",
+        "completeDescription": "Your tasks are now in Downloads, paused until you’re ready to continue.",
+        "partialDescription": "Imported tasks are paused. You can retry the remaining tasks or view your downloads.",
+        "stoppedEmptyDescription": "No tasks were added. You can try again when you’re ready.",
+        "failedEmptyDescription": "No tasks were added. Review the details, then try again.",
+        "imported": "Imported",
+        "remaining": "Remaining"
+      }
+    },
+    "importSelected": "Migrate"
+  },
+  "rendererRecovery": {
+    "title": "Antarmuka perlu dipulihkan",
+    "description": "Unduhan terus berjalan di latar belakang. Perubahan formulir yang belum disimpan mungkin hilang.",
+    "recovering": "Memulihkan antarmuka…",
+    "recover": "Pulihkan antarmuka",
+    "diagnostics": "Buka log diagnostik",
+    "downloads": "Buka unduhan",
+    "failed": "Pemulihan tidak tersedia. Coba lagi melalui menu aplikasi.",
+    "restored": "Antarmuka dipulihkan",
+    "wait": "Terus menunggu",
+    "routeTitle": "Halaman ini tidak dapat ditampilkan",
+    "submissionNotice": "Pengiriman sebelumnya mungkin telah selesai. Periksa unduhan sebelum membuat tugas yang sama lagi."
+  },
+  "pluginOperations": {
+    "requiredField": "Kolom wajib diisi",
+    "run": "Run operation",
+    "runAgain": "Run again",
+    "background": "Operations continue when this panel is closed.",
+    "loading": "Loading operation…",
+    "unauthorized": "This session is no longer authorized. Sign in again.",
+    "disabled": "Enable this plugin to use its operations.",
+    "blocked": "This plugin is blocked or its permissions are changing.",
+    "unsupported": "This host does not support the operation requirements.",
+    "ffmpeg": "Configure FFmpeg in Settings → Integration → Media Tools.",
+    "busy": "Another operation is using these resources. Try again after it finishes.",
+    "unavailable": "This operation is unavailable.",
+    "draftExpired": "This selection expired. Reopen the operation and select the files again.",
+    "resourceLimit": "The operation exceeds the host resource limit or available disk space.",
+    "invalidSelection": "Select completed tasks with one local file each.",
+    "invalidFile": "Choose a regular, non-empty local file.",
+    "fileType": "The selected file type does not match this field.",
+    "outputExists": "The output already exists. Choose a different name.",
+    "fileChanged": "A selected file or directory changed. Select it again.",
+    "invalidGrant": "Select the files again before starting.",
+    "sameInput": "Choose two different input files.",
+    "invalidOutput": "The plugin did not produce a valid output.",
+    "invalidRequest": "Check the operation parameters and try again.",
+    "invalidValue": "Enter a valid value.",
+    "descriptorChanged": "The plugin changed. Reopen the operation.",
+    "jobMissing": "This operation is no longer available in this session.",
+    "cancelled": "The operation was cancelled.",
+    "failed": "The operation failed. See the plugin log for details.",
+    "interrupted": "The host stopped before this operation finished. It was not restarted.",
+    "publicationUncertain": "The host could not confirm output publication. Check the destination before trying again.",
+    "cleanupWarning": "Temporary files remain for safe recovery. The host did not delete uncertain files.",
+    "status": {
+      "accepted": "Queued",
+      "preparing": "Preparing files",
+      "running": "Running",
+      "validating": "Validating result",
+      "committing": "Saving output",
+      "cleaning": "Cleaning up",
+      "cancelling": "Cancelling",
+      "succeeded": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "interrupted": "Interrupted"
+    },
+    "confirmFileTitle": "Authorize file access",
+    "confirmFile": "Allow this operation to read the following file?"
   }
 }

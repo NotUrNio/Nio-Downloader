@@ -9,8 +9,8 @@ import type { RegistryPluginDTO } from '@shared/schemas/registry'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../plugin-install-dialog', () => ({
-  PluginInstallDialog: () => null,
+vi.mock('@renderer/lib/transport', () => ({
+  transport: { invoke: vi.fn(), on: vi.fn(), off: vi.fn() },
 }))
 
 import { RegistryDetailPanel } from './registry-detail-panel'
@@ -37,7 +37,7 @@ function entry(over: Partial<RegistryPluginDTO> = {}): RegistryPluginDTO {
           description: 'Boosts speed',
           features: ['Fast downloads'],
         },
-        'de-DE': { description: 'Deutsche Beschreibung', features: [] },
+        'zh-Hant': { description: '繁體說明', features: [] },
       },
     },
     version: '1.0.0',
@@ -53,7 +53,7 @@ function entry(over: Partial<RegistryPluginDTO> = {}): RegistryPluginDTO {
     featured: false,
     compatible: true,
     package: {
-      url: 'https://dl.niodownloader.com/p/x.moext',
+      url: 'https://dl.niodownloader.app/p/x.moext',
       sha256: 'a'.repeat(64),
       size: 10,
     },
@@ -84,6 +84,25 @@ describe('RegistryDetailPanel install affordance', () => {
     expect(screen.getByTestId('registry-install-btn')).toBeDisabled()
   })
 
+  it.each(['electron', 'web'] as const)(
+    'explains the required range and current host on %s',
+    (kind) => {
+      renderPanel(
+        kind,
+        entry({
+          id: 'nio.media-merge',
+          compatible: false,
+          engines: { motrix: '>=2.0.0-beta.47 <3.0.0' },
+          hostVersion: '2.0.0-beta.46',
+        })
+      )
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'This plugin requires Nio Downloader >=2.0.0-beta.47 <3.0.0; current version: 2.0.0-beta.46'
+      )
+      expect(screen.getByTestId('registry-install-btn')).toBeDisabled()
+    }
+  )
+
   it('shows the verified registry Install button on web', () => {
     renderPanel('web', entry())
     expect(screen.getByTestId('registry-install-btn')).toBeEnabled()
@@ -91,11 +110,11 @@ describe('RegistryDetailPanel install affordance', () => {
 
   it('resolves sparse fields and honors an explicit empty features override', () => {
     // Registry requests accept BCP 47 values outside bundled App resources.
-    i18n.language = 'de-DE'
+    i18n.language = 'zh-Hant-TW'
     renderPanel('electron', entry())
 
     expect(screen.getByText('Speed Boost')).toBeInTheDocument()
-    expect(screen.getByText('Deutsche Beschreibung')).toBeInTheDocument()
+    expect(screen.getByText('繁體說明')).toBeInTheDocument()
     expect(screen.queryByText('Fast downloads')).toBeNull()
     expect(screen.queryByText('Features')).toBeNull()
   })

@@ -7,21 +7,15 @@
 // on platforms that do not ship the binary.
 
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import { accessSync } from 'node:fs'
-import net from 'node:net'
+import { createServer } from 'node:net'
 import path from 'node:path'
 import { aria2BinaryName } from '@shared/platform/aria2'
 import { Aria2Adapter } from '../core/engine/aria2/aria2-adapter'
 import { Aria2RpcClient } from '../core/engine/aria2/aria2-rpc-client'
 import { JsonRpcProtocol } from '../core/engine/aria2/json-rpc-protocol'
 import { WebSocketTransport } from '../core/engine/aria2/web-socket-transport'
-
-export interface Aria2ProcessDiagnostics {
-  exitCode: number | null
-  signal: NodeJS.Signals | null
-  spawnError: Error | null
-  stderrLines: string[]
-}
 
 export interface Aria2Handle {
   proc: ChildProcess
@@ -96,216 +90,159 @@ export function canBindLoopbackTcp(): boolean {
 }
 
 /**
- * Returns a free ephemeral TCP port assigned by the OS.
- */
-export async function getAvailablePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer()
-    srv.listen(0, '127.0.0.1', () => {
-      const address = srv.address()
-      const port = typeof address === 'object' && address ? address.port : 0
-      srv.close((err) => {
-        if (err) reject(err)
-        else resolve(port)
-      })
-    })
-    srv.on('error', reject)
-  })
-}
-
-export interface WaitForRpcOptions {
-  getDiagnostics?: () => Aria2ProcessDiagnostics
-  pollIntervalMs?: number
-}
-
-/**
- * Poll aria2's RPC endpoint until it responds or the timeout elapses.
- * Uses HTTP POST (simpler than WebSocket for readiness probing).
- * If getDiagnostics is provided, fails immediately with stderr and exit status
- * when the process terminates prematurely.
- */
-export async function waitForRpc(
-  port: number,
-  timeoutMs: number,
-  options?: WaitForRpcOptions
-): Promise<void> {
-  const start = Date.now()
-  let lastErr: unknown = null
-  const pollInterval = options?.pollIntervalMs ?? 50
-
-  while (Date.now() - start < timeoutMs) {
-    if (options?.getDiagnostics) {
-      const diag = options.getDiagnostics()
-      if (diag.spawnError) {
-        const stderr =
-          diag.stderrLines.length > 0
-            ? `\nLast stderr:\n${diag.stderrLines.join('\n')}`
-            : ''
-        throw new Error(
-          `aria2 failed to spawn: ${diag.spawnError.message}${stderr}`
-        )
-      }
-      if (diag.exitCode !== null || diag.signal !== null) {
-        const exitDesc =
-          diag.exitCode !== null
-            ? `exit code ${diag.exitCode}`
-            : `signal ${diag.signal}`
-        const stderrDesc =
-          diag.stderrLines.length > 0
-            ? `\nLast stderr:\n${diag.stderrLines.join('\n')}`
-            : '\n(no stderr captured)'
-        throw new Error(
-          `aria2 process exited prematurely with ${exitDesc} before RPC became ready on port ${port}.${stderrDesc}`
-        )
-      }
-    }
-
-    try {
-      const res = await fetch(`http://127.0.0.1:${port}/jsonrpc`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'probe',
-          method: 'system.listMethods',
-          params: [],
-        }),
-      })
-      if (res.ok) return
-    } catch (err) {
-      lastErr = err
-    }
-    await new Promise((r) => setTimeout(r, pollInterval))
-  }
-
-  const diag = options?.getDiagnostics ? options.getDiagnostics() : undefined
-  const detail = lastErr instanceof Error ? `: ${lastErr.message}` : ''
-  const statusDesc = diag
-    ? diag.exitCode !== null || diag.signal !== null
-      ? ` (process exited with ${diag.exitCode !== null ? `code ${diag.exitCode}` : `signal ${diag.signal}`})`
-      : ' (process still running)'
-    : ''
-  const stderrDesc =
-    diag && diag.stderrLines.length > 0
-      ? `\nLast stderr:\n${diag.stderrLines.join('\n')}`
-      : ''
-
-  throw new Error(
-    `aria2 RPC did not come up within ${timeoutMs}ms${detail}${statusDesc}${stderrDesc}`
-  )
-}
-
-/**
  * Spawn a fresh aria2c process for a test suite. The caller MUST invoke
  * `handle.kill()` in `afterAll` to avoid leaking processes.
  */
 export async function spawnAria2ForTest(
   opts: SpawnAria2Options
 ): Promise<Aria2Handle> {
-  const maxAttempts = opts.port ? 1 : 3
-  let lastError: unknown
+  const port = opts.port ?? (await availablePort())
+  const secret = opts.secret ?? randomBytes(24).toString('hex')
+  const bin = opts.binaryPath ?? resolveBundledAria2()
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const port = opts.port ?? (await getAvailablePort())
-    const secret = opts.secret ?? 'test_secret'
-    const bin = opts.binaryPath ?? resolveBundledAria2()
+  const proc = spawn(
+    bin,
+    [
+      '--no-conf=true',
+      '--no-netrc=true',
+      '--enable-rpc=true',
+      `--rpc-listen-port=${port}`,
+      `--rpc-secret=${secret}`,
+      '--rpc-allow-origin-all=true',
+      '--enable-dht=false',
+      '--enable-peer-exchange=false',
+      '--bt-save-metadata=true',
+      '--auto-file-renaming=false',
+      '--allow-overwrite=false',
+      '--bt-metadata-only=false',
+      '--rpc-save-upload-metadata=true',
+      '--console-log-level=warn',
+      `--dir=${opts.baseDir}`,
+      ...(opts.extraArgs ?? []),
+    ],
+    { stdio: ['ignore', 'pipe', 'pipe'] }
+  )
 
-    const stderrLines: string[] = []
-    let spawnError: Error | null = null
-    let exitCode: number | null = null
-    let exitSignal: NodeJS.Signals | null = null
-
-    const proc = spawn(
-      bin,
-      [
-        '--no-conf=true',
-        '--no-netrc=true',
-        '--enable-rpc=true',
-        `--rpc-listen-port=${port}`,
-        `--rpc-secret=${secret}`,
-        '--rpc-allow-origin-all=true',
-        '--enable-dht=false',
-        '--enable-peer-exchange=false',
-        '--bt-save-metadata=true',
-        '--auto-file-renaming=false',
-        '--allow-overwrite=false',
-        '--bt-metadata-only=false',
-        '--rpc-save-upload-metadata=true',
-        '--console-log-level=warn',
-        `--dir=${opts.baseDir}`,
-        ...(opts.extraArgs ?? []),
-      ],
-      { stdio: ['ignore', 'pipe', 'pipe'] }
-    )
-
-    proc.stdout?.on('data', () => {})
-    proc.stderr?.on('data', (chunk: Buffer) => {
-      const text = chunk.toString('utf8')
-      for (const line of text.split('\n')) {
-        if (line.trim()) {
-          stderrLines.push(line)
-          if (stderrLines.length > 30) stderrLines.shift()
-        }
-      }
-    })
-
-    proc.on('error', (err) => {
-      spawnError = err
-    })
-    proc.on('exit', (code, signal) => {
-      exitCode = code
-      exitSignal = signal
-    })
-
-    const getDiagnostics = (): Aria2ProcessDiagnostics => ({
-      exitCode,
-      signal: exitSignal,
-      spawnError,
-      stderrLines: [...stderrLines],
-    })
-
-    if (opts.waitForHttpRpc !== false) {
-      try {
-        await waitForRpc(port, 5000, { getDiagnostics })
-      } catch (err) {
-        if (!proc.killed) proc.kill('SIGKILL')
-        const isPortCollision = stderrLines.some(
-          (l) =>
-            l.includes('Failed to bind a socket') ||
-            l.includes('Address already in use')
+  // Keep bounded diagnostics for startup failures without noisy passing tests.
+  let startupOutput = ''
+  const collectOutput = (chunk: Buffer) => {
+    startupOutput = (startupOutput + chunk.toString()).slice(-4096)
+  }
+  proc.stdout?.on('data', collectOutput)
+  proc.stderr?.on('data', collectOutput)
+  let spawnError: Error | undefined
+  proc.once('error', (error) => {
+    spawnError = error
+  })
+  const failure = () =>
+    spawnError ??
+    (proc.exitCode !== null || proc.signalCode !== null
+      ? new Error(
+          `Test aria2 exited before its authenticated RPC was ready (exit=${proc.exitCode}, signal=${proc.signalCode}): ${startupOutput.trim()}`
         )
-        if (isPortCollision && attempt < maxAttempts) {
-          lastError = err
-          continue
-        }
-        throw err
-      }
-    }
+      : undefined)
 
-    return {
-      proc,
-      port,
-      secret,
-      kill: async () => {
-        if (proc.killed || proc.exitCode !== null) return
-        await new Promise<void>((resolve) => {
-          const hardKill = setTimeout(() => {
-            if (!proc.killed && proc.exitCode === null) {
-              proc.kill('SIGKILL')
-            }
-          }, 1000)
-          hardKill.unref()
-          proc.once('exit', () => {
-            clearTimeout(hardKill)
-            resolve()
-          })
-          proc.kill('SIGTERM')
-        })
-      },
+  if (opts.waitForHttpRpc !== false) {
+    try {
+      await waitForRpc(port, 5000, secret, failure)
+    } catch (err) {
+      // Bail out cleanly if RPC never comes up.
+      if (!proc.killed) proc.kill('SIGKILL')
+      throw err
     }
   }
 
-  throw lastError
+  return {
+    proc,
+    port,
+    secret,
+    kill: async () => {
+      if (proc.exitCode !== null || proc.signalCode !== null) return
+      await new Promise<void>((resolve) => {
+        const hardKill = setTimeout(() => {
+          if (proc.exitCode === null && proc.signalCode === null) {
+            proc.kill('SIGKILL')
+          }
+        }, 1000)
+        hardKill.unref()
+        proc.once('exit', () => {
+          clearTimeout(hardKill)
+          resolve()
+        })
+        proc.kill('SIGTERM')
+      })
+    },
+  }
+}
+
+async function availablePort(): Promise<number> {
+  const server = createServer()
+  server.unref()
+  return new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address()
+      server.close((error) => {
+        if (error) reject(error)
+        else if (address && typeof address !== 'string') resolve(address.port)
+        else reject(new Error('Unable to reserve a test aria2 port'))
+      })
+    })
+  })
+}
+
+/**
+ * Poll aria2's RPC endpoint until it responds or the timeout elapses.
+ * Uses HTTP POST (simpler than WebSocket for readiness probing).
+ */
+export async function waitForRpc(
+  port: number,
+  timeoutMs: number,
+  secret?: string,
+  processFailure?: () => Error | undefined
+): Promise<void> {
+  const start = Date.now()
+  let lastErr: unknown = null
+  while (Date.now() - start < timeoutMs) {
+    const failure = processFailure?.()
+    if (failure) throw failure
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/jsonrpc`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(
+          Math.max(1, Math.min(500, timeoutMs - (Date.now() - start)))
+        ),
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'probe',
+          method: secret ? 'aria2.getVersion' : 'system.listMethods',
+          params: secret ? [`token:${secret}`] : [],
+        }),
+      })
+      if (res.ok) {
+        const body = (await res.json()) as {
+          result?: { version?: unknown }
+          error?: unknown
+        }
+        if (
+          !body.error &&
+          (secret
+            ? typeof body.result?.version === 'string'
+            : Array.isArray(body.result))
+        ) {
+          const failure = processFailure?.()
+          if (failure) throw failure
+          return
+        }
+      }
+    } catch (err) {
+      lastErr = err
+    }
+    await new Promise((r) => setTimeout(r, 100))
+  }
+  const detail = lastErr instanceof Error ? `: ${lastErr.message}` : ''
+  throw new Error(`aria2 RPC did not come up within ${timeoutMs}ms${detail}`)
 }
 
 /**

@@ -1,5 +1,6 @@
 import { ResizeHandle } from '@renderer/components/desktop-kit/resize-handle'
 import { ChevronDownIcon, ChevronUpIcon } from '@renderer/components/icons'
+import { Checkbox } from '@renderer/components/ui/checkbox'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -7,13 +8,14 @@ import {
 } from '@renderer/components/ui/context-menu'
 import { useDirection } from '@renderer/components/ui/direction'
 import { cn } from '@renderer/lib/utils'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   defaultTaskColumns,
+  deriveTaskColumnModel,
   TASK_COLUMNS,
   type TaskColumn,
-  taskGridStyle,
+  type TaskColumnModel,
 } from './columns'
 import { ColumnVisibilityItems } from './list-view-menu'
 import {
@@ -28,12 +30,20 @@ export interface TaskColumnHeaderProps {
   sort: TaskSort
   onSort: (column: TaskSortColumn) => void
   columns?: TaskColumn[]
+  columnModel?: TaskColumnModel
+  headerCheckbox: {
+    checked: boolean
+    indeterminate: boolean
+    onChange: () => void
+  }
 }
 
 export function TaskColumnHeader({
   sort,
   onSort,
-  columns = defaultTaskColumns(),
+  columns,
+  columnModel: providedModel,
+  headerCheckbox,
 }: TaskColumnHeaderProps) {
   const { t } = useTranslation()
   const direction = useDirection()
@@ -41,6 +51,13 @@ export function TaskColumnHeader({
   const moveColumn = useDownloadsView((state) => state.moveColumn)
   const dragging = useRef<TaskSortColumn | null>(null)
   const effectiveSort = sort ?? DEFAULT_TASK_SORT
+
+  const model = useMemo(
+    () =>
+      providedModel ?? deriveTaskColumnModel(columns ?? defaultTaskColumns()),
+    [providedModel, columns]
+  )
+
   return (
     <ContextMenu>
       <ContextMenuTrigger
@@ -50,12 +67,32 @@ export function TaskColumnHeader({
             role="row"
             tabIndex={-1}
             aria-rowindex={1}
-            className="sticky top-0 z-10 grid h-9 shrink-0 items-center border-b border-border bg-background px-3 text-xs font-medium text-muted-foreground"
-            style={taskGridStyle(columns)}
+            className={cn(
+              'sticky top-0 z-10 grid shrink-0 items-center overflow-hidden border-b border-border bg-background px-1 text-xs font-medium text-muted-foreground select-none',
+              model.headerHeight === 32 ? 'h-8' : 'h-9'
+            )}
+            style={model.gridStyle}
           />
         }
       >
-        {columns.map((column, index) => {
+        {/* biome-ignore lint/a11y/useSemanticElements: Selection belongs to the virtual ARIA grid. */}
+        <div
+          role="columnheader"
+          tabIndex={-1}
+          aria-colindex={1}
+          className="flex items-center justify-center min-w-0"
+        >
+          <Checkbox
+            render={<button type="button" />}
+            nativeButton
+            aria-label={t('menu.task.selectAllTask')}
+            checked={headerCheckbox.checked}
+            indeterminate={headerCheckbox.indeterminate}
+            onCheckedChange={headerCheckbox.onChange}
+            className="relative before:absolute before:-inset-2.5"
+          />
+        </div>
+        {model.visibleColumns.map((column, index) => {
           const id = column.id
           const active = effectiveSort.column === id
           const speedColumn = id === 'down' || id === 'up'
@@ -76,7 +113,7 @@ export function TaskColumnHeader({
               key={id}
               tabIndex={-1}
               role="columnheader"
-              aria-colindex={index + 1}
+              aria-colindex={index + 2}
               aria-sort={
                 active
                   ? effectiveSort.direction === 'asc'
@@ -84,13 +121,14 @@ export function TaskColumnHeader({
                     : 'descending'
                   : undefined
               }
-              className="relative min-w-0"
+              className="relative min-w-0 overflow-hidden"
               onDragOver={(event) => {
                 if (dragging.current) event.preventDefault()
               }}
               onDrop={(event) => {
+                if (!dragging.current) return
                 event.preventDefault()
-                if (dragging.current) moveColumn(dragging.current, id)
+                moveColumn(dragging.current, id)
                 dragging.current = null
               }}
             >
@@ -110,7 +148,7 @@ export function TaskColumnHeader({
                   { column: accessibleLabel }
                 )}
                 className={cn(
-                  'flex h-7 w-full min-w-0 cursor-default items-center gap-1 rounded-sm px-2 text-start outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
+                  'flex h-7 w-full min-w-0 cursor-default items-center gap-1 rounded-sm px-2 text-start outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring whitespace-nowrap overflow-hidden',
                   active && 'font-semibold text-foreground'
                 )}
                 onClick={() => onSort(id)}
@@ -134,14 +172,17 @@ export function TaskColumnHeader({
                   const towardStart =
                     event.key ===
                     (direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft')
-                  const neighbor = columns[index + (towardStart ? -1 : 1)]
+                  const neighbor =
+                    model.visibleColumns[index + (towardStart ? -1 : 1)]
                   if (!neighbor) return
                   if (towardStart) moveColumn(id, neighbor.id)
                   else moveColumn(neighbor.id, id)
                 }}
                 onMouseDownCapture={(event) => event.stopPropagation()}
               >
-                <span className="truncate">{label}</span>
+                <span className="truncate whitespace-nowrap" title={label}>
+                  {label}
+                </span>
                 {active && (
                   <SortIcon
                     aria-hidden="true"

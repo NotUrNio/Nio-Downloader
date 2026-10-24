@@ -1,6 +1,7 @@
 import '@renderer/lib/i18n'
 import '@testing-library/jest-dom/vitest'
 import { Commands } from '@shared/protocol/commands'
+import { holdExitAnimation } from '@test-utils/hold-exit-animation'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -18,6 +19,27 @@ beforeEach(() => {
 })
 
 describe('BuiltinUpdateDialog', () => {
+  it('keeps consent details throughout exit instead of reverting to working', async () => {
+    mockInvoke.mockResolvedValue({
+      needsConsent: true,
+      stagingId: 's1',
+      added: ['perm:ffmpeg'],
+      newVersion: '1.1.0',
+    })
+    const props = {
+      pluginId: 'niodownloader.scraper-hook',
+      onOpenChange: vi.fn(),
+    }
+    const view = render(<BuiltinUpdateDialog open {...props} />)
+    await screen.findByText('perm:ffmpeg')
+    const dialog = screen.getByRole('dialog')
+    const content = dialog.textContent
+    const finish = holdExitAnimation(dialog)
+    view.rerender(<BuiltinUpdateDialog open={false} {...props} />)
+    expect(dialog).toHaveAttribute('data-closed')
+    expect(dialog.textContent).toBe(content)
+    await finish()
+  })
   it('renders the added list on needsConsent and confirm invokes ConfirmBuiltinUpdate', async () => {
     mockInvoke.mockImplementation((channel: string) => {
       if (channel === Commands.InstallBuiltinUpdate) {
@@ -36,7 +58,7 @@ describe('BuiltinUpdateDialog', () => {
 
     render(
       <BuiltinUpdateDialog
-        pluginId="nio.scraper-hook"
+        pluginId="niodownloader.scraper-hook"
         open
         onOpenChange={vi.fn()}
       />
@@ -44,7 +66,7 @@ describe('BuiltinUpdateDialog', () => {
 
     await waitFor(() =>
       expect(mockInvoke).toHaveBeenCalledWith(Commands.InstallBuiltinUpdate, {
-        pluginId: 'nio.scraper-hook',
+        pluginId: 'niodownloader.scraper-hook',
       })
     )
     expect(await screen.findByText('perm:ffmpeg')).toBeInTheDocument()
@@ -68,7 +90,7 @@ describe('BuiltinUpdateDialog', () => {
 
     render(
       <BuiltinUpdateDialog
-        pluginId="nio.scraper-hook"
+        pluginId="niodownloader.scraper-hook"
         open
         onOpenChange={vi.fn()}
       />
@@ -84,7 +106,10 @@ describe('BuiltinUpdateDialog', () => {
   it('shows the updateInstalled message and clears the store update entry on a restartRequired:false success', async () => {
     usePluginsStore.setState({
       updates: {
-        'nio.scraper-hook': { latestVersion: '1.1.0', channel: 'builtin' },
+        'niodownloader.scraper-hook': {
+          latestVersion: '1.1.0',
+          channel: 'builtin',
+        },
       },
     })
     mockInvoke.mockImplementation((channel: string) => {
@@ -96,7 +121,7 @@ describe('BuiltinUpdateDialog', () => {
 
     render(
       <BuiltinUpdateDialog
-        pluginId="nio.scraper-hook"
+        pluginId="niodownloader.scraper-hook"
         open
         onOpenChange={vi.fn()}
       />
@@ -104,7 +129,7 @@ describe('BuiltinUpdateDialog', () => {
 
     expect(await screen.findByText('Update installed.')).toBeInTheDocument()
     expect(
-      usePluginsStore.getState().updates['nio.scraper-hook']
+      usePluginsStore.getState().updates['niodownloader.scraper-hook']
     ).toBeUndefined()
   })
 
@@ -126,7 +151,7 @@ describe('BuiltinUpdateDialog', () => {
 
     render(
       <BuiltinUpdateDialog
-        pluginId="nio.scraper-hook"
+        pluginId="niodownloader.scraper-hook"
         open
         onOpenChange={vi.fn()}
       />

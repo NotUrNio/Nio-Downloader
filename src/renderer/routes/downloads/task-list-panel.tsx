@@ -1,5 +1,6 @@
 import { registerDownloadsMenuContext } from '@renderer/features/application-menu/task-context'
 import './downloads-list.css'
+import { useCompactHeader } from '@renderer/components/desktop-kit/hooks/use-compact-header'
 import { useSelectableList } from '@renderer/components/desktop-kit/hooks/use-selectable-list'
 import { MarqueeOverlay } from '@renderer/components/desktop-kit/marquee-selection/marquee-overlay'
 import type { SelectionStore } from '@renderer/components/desktop-kit/selection/types'
@@ -10,7 +11,7 @@ import { Events } from '@shared/protocol/events'
 import type { DownloadTask } from '@shared/types/task'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TASK_HEADER_HEIGHT, TASK_ROW_HEIGHT } from './columns'
+import { deriveTaskColumnModel, type TaskTableDensity } from './columns'
 import { EmptyTasks } from './empty-tasks'
 import type { DownloadsTab } from './filter'
 import { sortTasks } from './sort'
@@ -45,13 +46,17 @@ export function TaskListPanel({
   bottomInset = 0,
 }: TaskListPanelProps) {
   const { t, i18n } = useTranslation()
+  const compact = useCompactHeader()
+  const density: TaskTableDensity = compact ? 'compact' : 'comfortable'
   const sort = useDownloadsSort((state) => state.sort)
   const toggleSort = useDownloadsSort((state) => state.toggleSort)
   const allColumns = useDownloadsView((state) => state.columns)
-  const columns = useMemo(
-    () => allColumns.filter((column) => column.visible),
-    [allColumns]
+  const columnModel = useMemo(
+    () => deriveTaskColumnModel(allColumns, density),
+    [allColumns, density]
   )
+  const columns = columnModel.visibleColumns
+  const selectionActive = selection((state) => state.selectedIds.size > 0)
   const sorted = useMemo(
     () => sortTasks(tasks, sort, i18n.language),
     [tasks, sort, i18n.language]
@@ -86,17 +91,23 @@ export function TaskListPanel({
   const macOS =
     transport.platform === 'darwin' ||
     (transport.platform === 'web' && /Mac|iPhone|iPad/.test(navigator.platform))
-  const { listRef, listProps, marqueeProps, getRowProps, onKeyDown } =
-    useSelectableList({
-      items: displayed,
-      getId,
-      getText,
-      rowHeight: TASK_ROW_HEIGHT,
-      headerHeight: TASK_HEADER_HEIGHT,
-      store: selection,
-      nativeSelection: true,
-      macOS,
-    })
+  const {
+    listRef,
+    listProps,
+    marqueeProps,
+    getRowProps,
+    headerCheckbox,
+    onKeyDown,
+  } = useSelectableList({
+    items: displayed,
+    getId,
+    getText,
+    rowHeight: columnModel.rowHeight,
+    headerHeight: columnModel.headerHeight,
+    store: selection,
+    nativeSelection: true,
+    macOS,
+  })
   const focusedId = selection((state) =>
     state.focusedIndex === null
       ? undefined
@@ -170,7 +181,7 @@ export function TaskListPanel({
         aria-label={t('panel.downloads.title')}
         aria-multiselectable="true"
         aria-rowcount={displayed.length + 1}
-        aria-colcount={columns.length}
+        aria-colcount={columns.length + 1}
         aria-activedescendant={
           focusedId ? `${prefix}-${encodeURIComponent(focusedId)}` : undefined
         }
@@ -215,12 +226,16 @@ export function TaskListPanel({
           pointerFocus.current = true
           setKeyboardFocus(false)
           if (event.button !== 0 || (macOS && event.ctrlKey)) return
-          if ((event.target as Element).closest(TASK_LIST_CONTROL_SELECTOR))
-            return
           suppressClick.current = false
           downId.current =
             (event.target as Element).closest<HTMLElement>('[data-task-id]')
               ?.dataset.taskId ?? null
+          // Keep checkbox taps attached to the task under the pointer while
+          // live sort values change, just like clicks on the rest of the row.
+          if ((event.target as Element).closest(TASK_LIST_CONTROL_SELECTOR)) {
+            if (downId.current) setFrozenIds(displayed.map(getId))
+            return
+          }
           setFrozenIds(displayed.map(getId))
           event.currentTarget.focus({ preventScroll: true })
         }}
@@ -238,6 +253,7 @@ export function TaskListPanel({
         onClickCapture={(event) => {
           lastClickedId.current = null
           const target = event.target as Element
+          if (target.closest(TASK_LIST_CONTROL_SELECTOR)) return
           const id =
             target.closest<HTMLElement>('[data-task-id]')?.dataset.taskId
           if (
@@ -306,8 +322,10 @@ export function TaskListPanel({
           renderHeader={() => (
             <TaskColumnHeader
               columns={columns}
+              columnModel={columnModel}
               sort={sort}
               onSort={toggleSort}
+              headerCheckbox={headerCheckbox}
             />
           )}
           renderRow={({ item, index }) => (
@@ -315,8 +333,10 @@ export function TaskListPanel({
               id={`${prefix}-${encodeURIComponent(item.id)}`}
               task={item}
               columns={columns}
+              columnModel={columnModel}
               index={index}
               rowProps={getRowProps(index)}
+              selectionActive={selectionActive}
             />
           )}
           renderEmpty={() => null}

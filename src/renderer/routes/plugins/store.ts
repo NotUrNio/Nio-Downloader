@@ -1,3 +1,4 @@
+import type { RegistryStatus } from '@shared/schemas/plugin-network'
 import type { RegistryPluginDTO } from '@shared/schemas/registry'
 import type {
   PluginListDTO,
@@ -25,9 +26,11 @@ interface PluginsState {
   // an accurate audience tone — without it, every plugin with any
   // optionalPermission falsely shows "Grant access".
   grants: Record<string, GrantsMap>
-  // Remote-registry directory (dl.niodownloader.com via RegistryClient in main).
+  // Remote-registry directory (dl.niodownloader.app via RegistryClient in main).
   // Kept beside the installed list so the page can partition
   // installed-vs-available by id.
+  registryStatus: RegistryStatus | null
+  setRegistryStatus(status: RegistryStatus): void
   registry: RegistryPluginDTO[]
   // pluginId → latest version + channel, from Commands.CheckPluginUpdates.
   // channel distinguishes a community-registry update (routes to
@@ -57,6 +60,8 @@ export const usePluginsStore = create<PluginsState>((set) => ({
   detail: {},
   grants: {},
   registry: [],
+  registryStatus: null,
+  setRegistryStatus: (registryStatus) => set({ registryStatus }),
   updates: {},
   setList: (list) => set({ list, loaded: true }),
   setRegistry: (registry) => set({ registry }),

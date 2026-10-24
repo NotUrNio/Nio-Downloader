@@ -53,6 +53,7 @@ import { generateRpcSecret } from '@shared/utils/rpc-secret'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SettingsCardDialogProps } from './card-types'
+import { SettingsFileSection } from './settings-file-section'
 import { advancedFormSchema } from './settings-form-schemas'
 
 type HistoryRetentionMode = 'all' | 'limited' | 'session'
@@ -494,6 +495,8 @@ export function AdvancedDialog({
                   </fieldset>
                 </form>
               </Form>
+              <Separator className="my-4" />
+              <SettingsFileSection />
             </ScrollAreaContent>
           </ScrollAreaViewport>
           <ScrollBar />

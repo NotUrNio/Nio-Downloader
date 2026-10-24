@@ -261,7 +261,7 @@ export function EngineDiagnosticsDialogHost() {
   const version = report?.binary.version
   const displayVersion = formatEngineDisplayVersion(version) || null
   const engineName = version?.includes('-nio.')
-    ? t(`${key}.nioEngine`)
+    ? t(`${key}.niodownloaderEngine`)
     : report?.binary.name
   const actionLabel =
     action === EngineRecoveryAction.ForceTerminate

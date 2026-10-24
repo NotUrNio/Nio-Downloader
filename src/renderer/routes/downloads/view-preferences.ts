@@ -3,36 +3,99 @@ import { create } from 'zustand'
 import {
   clampColumnWidth,
   defaultTaskColumns,
+  TASK_COLUMNS,
   type TaskColumn,
 } from './columns'
 import { TASK_SORT_COLUMNS, type TaskSortColumn } from './sort'
 
-const STORAGE_KEY = 'niodownloader.downloads.view.v1'
+export const STORAGE_KEY = 'niodownloader.downloads.view.v1'
 const PREVIOUS_DEFAULT_WIDTHS: Partial<Record<TaskSortColumn, number>> = {
   name: 240,
   progress: 120,
   down: 140,
   up: 140,
 }
-const ViewPreferencesSchema = z.object({
-  version: z.union([z.literal(1), z.literal(2)]),
-  columns: z
-    .array(
-      z.object({
-        id: z.enum(TASK_SORT_COLUMNS),
-        width: z.number().finite().min(40).max(1200),
-        visible: z.boolean(),
-      })
-    )
-    .length(TASK_SORT_COLUMNS.length)
-    .refine(
-      (columns) =>
-        new Set(columns.map((column) => column.id)).size ===
-        TASK_SORT_COLUMNS.length
-    ),
-  inspectorVisible: z.boolean(),
-  inspectorSnap: z.enum(['compact', 'medium', 'expanded']),
+
+const RawColumnSchema = z.object({
+  id: z.string(),
+  width: z.number().finite().optional(),
+  visible: z.boolean().optional(),
 })
+
+export const ViewPreferencesSchema = z.object({
+  version: z.number().optional(),
+  columns: z.array(RawColumnSchema).optional(),
+  inspectorVisible: z.boolean().optional(),
+  inspectorSnap: z.enum(['compact', 'medium', 'expanded']).optional(),
+})
+
+export function sanitizeSavedColumns(
+  savedColumns: unknown,
+  version?: number
+): TaskColumn[] {
+  const defaults = defaultTaskColumns()
+  if (!Array.isArray(savedColumns)) return defaults
+
+  // Corrupted state with duplicate IDs falls back to defaults
+  const rawIds = savedColumns
+    .map((c) =>
+      c && typeof c === 'object' ? (c as { id?: unknown }).id : undefined
+    )
+    .filter(Boolean)
+  if (new Set(rawIds).size !== rawIds.length) {
+    return defaults
+  }
+
+  const validIds = new Set(TASK_SORT_COLUMNS)
+  const seenIds = new Set<TaskSortColumn>()
+  const parsed: TaskColumn[] = []
+
+  for (const item of savedColumns) {
+    if (!item || typeof item !== 'object') continue
+    const rawId = (item as { id?: unknown }).id
+    if (typeof rawId !== 'string' || !validIds.has(rawId as TaskSortColumn)) {
+      // Unknown or removed column ids in saved state are dropped
+      continue
+    }
+    const id = rawId as TaskSortColumn
+    if (seenIds.has(id)) continue
+    seenIds.add(id)
+
+    const def = TASK_COLUMNS[id]
+    const rawWidth =
+      typeof (item as { width?: unknown }).width === 'number'
+        ? (item as { width: number }).width
+        : def.width
+    // Widths are clamped to minimum (and maximum)
+    const width = clampColumnWidth(id, rawWidth)
+
+    const rawVisible = (item as { visible?: unknown }).visible
+    const visible =
+      id === 'name' ? true : typeof rawVisible === 'boolean' ? rawVisible : true
+
+    parsed.push({ id, width, visible })
+  }
+
+  // Missing ids fall back to defaults
+  for (const defCol of defaults) {
+    if (!seenIds.has(defCol.id)) {
+      parsed.push(defCol)
+      seenIds.add(defCol.id)
+    }
+  }
+
+  // 1.0.0 saved state migration: if version is 1 and columns matched the untouched old defaults,
+  // migrate to the new defaultTaskColumns().
+  const oldDefaults =
+    version === 1 &&
+    parsed.every((column, index) => {
+      const current = defaults[index]
+      const oldWidth = PREVIOUS_DEFAULT_WIDTHS[column.id] ?? current?.width
+      return current && column.id === current.id && column.width === oldWidth
+    })
+
+  return oldDefaults ? defaults : parsed
+}
 
 function defaults() {
   return {
@@ -46,29 +109,15 @@ function defaults() {
 function readPreferences() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    const saved = ViewPreferencesSchema.parse(JSON.parse(raw ?? 'null'))
-    const columns = saved.columns.map((column) => ({
-      ...column,
-      width: clampColumnWidth(column.id, column.width),
-      visible: column.id === 'name' || column.visible,
-    }))
-    const defaultColumns = defaultTaskColumns()
-    // Only migrate the untouched old layout; preserve custom widths and order.
-    const oldDefaults =
-      saved.version === 1 &&
-      columns.every((column, index) => {
-        const current = defaultColumns[index]
-        const oldWidth = PREVIOUS_DEFAULT_WIDTHS[column.id] ?? current.width
-        return (
-          column.id === current.id &&
-          column.visible &&
-          column.width === oldWidth
-        )
-      })
+    if (!raw) return defaults()
+    const parsedJson = JSON.parse(raw)
+    const saved = ViewPreferencesSchema.parse(parsedJson)
+    const columns = sanitizeSavedColumns(saved.columns, saved.version)
     return {
-      ...saved,
       version: 2 as const,
-      columns: oldDefaults ? defaultColumns : columns,
+      columns,
+      inspectorVisible: saved.inspectorVisible ?? false,
+      inspectorSnap: saved.inspectorSnap ?? ('medium' as const),
     }
   } catch {
     return defaults()

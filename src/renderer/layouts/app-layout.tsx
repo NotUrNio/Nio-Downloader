@@ -1,7 +1,10 @@
 import { AddTaskDialogHost } from '@renderer/components/add-task-dialog/add-task-dialog-host'
 import { AppSidebar } from '@renderer/components/desktop-kit/sidebar/app-sidebar'
+import {
+  RendererSubmissionNotice,
+  RendererToaster,
+} from '@renderer/components/renderer-recovery-notice'
 import { SidebarInset, SidebarProvider } from '@renderer/components/ui/sidebar'
-import { Toaster } from '@renderer/components/ui/toast'
 import { TooltipProvider } from '@renderer/components/ui/tooltip'
 import { WebConnectionNotice } from '@renderer/components/web-connection-notice'
 import { AddTaskTriggerButton } from '@renderer/components/window-chrome/add-task-trigger-button'
@@ -11,24 +14,28 @@ import { WindowChrome } from '@renderer/components/window-chrome/window-chrome'
 import { DesktopMenuActions } from '@renderer/features/application-menu/desktop-menu-actions'
 import { MenuNavigationFocus } from '@renderer/features/application-menu/navigation-focus'
 import { EngineDiagnosticsDialogHost } from '@renderer/features/engine-diagnostics/engine-diagnostics-dialog'
+import { OperationDialogHost } from '@renderer/features/plugin-operations/operation-dialog'
 import { useEngineRestartRequiredToast } from '@renderer/hooks/use-engine-restart-required-toast'
 import { useIpcEvent } from '@renderer/hooks/use-ipc-event'
 import { useMenuContextSync } from '@renderer/hooks/use-menu-context-sync'
 import { useNotificationToasts } from '@renderer/hooks/use-notification-toasts'
 import { useSidebarColor } from '@renderer/hooks/use-sidebar-color'
 import { useToastEvents } from '@renderer/hooks/use-toast-events'
+import { useWindowTorrentDrop } from '@renderer/hooks/use-window-torrent-drop'
 import { cn } from '@renderer/lib/utils'
 import { electronServices } from '@renderer/platform/electron-services'
 import { PlatformServicesProvider } from '@renderer/platform/services'
 import { webServices } from '@renderer/platform/web-services'
 import type { RouteHandle } from '@renderer/router-types'
+import { RedownloadOverwriteDialogHost } from '@renderer/routes/downloads/inspector/redownload-overwrite-dialog-host'
 import { RemoveTasksDialogHost } from '@renderer/routes/downloads/inspector/remove-tasks-dialog-host'
 import { useDownloadsSelection } from '@renderer/routes/downloads/store'
 import { useDownloadsView } from '@renderer/routes/downloads/view-preferences'
 import { usePairRequestPrompts } from '@renderer/routes/settings/cards/integration/use-pair-request-prompts'
 import { isDownloadsListRoute } from '@shared/lib/task-navigation'
 import { Events } from '@shared/protocol/events'
-import { Outlet, useMatches, useNavigate } from 'react-router'
+import { type ReactNode, useRef } from 'react'
+import { useLocation, useMatches, useNavigate, useOutlet } from 'react-router'
 
 const platformServices =
   __NIO_TARGET__ === 'electron' ? electronServices : webServices
@@ -36,6 +43,12 @@ const platformServices =
 function DesktopMenuContext() {
   useMenuContextSync()
   return <DesktopMenuActions />
+}
+
+/** Web only: drop .torrent files on the window to start the Add Task flow. */
+function WindowTorrentDrop() {
+  useWindowTorrentDrop()
+  return null
 }
 
 export function AppLayout() {
@@ -46,6 +59,11 @@ export function AppLayout() {
   useNotificationToasts()
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const outlet = useOutlet()
+  const settingsActive = /^\/settings(?:\/|$)/.test(location.pathname)
+  const retainedSettings = useRef<ReactNode>(null)
+  if (settingsActive) retainedSettings.current = outlet
   const matches = useMatches()
   const transparentInset = matches.some(
     (m) => (m.handle as RouteHandle | undefined)?.transparentInset
@@ -58,7 +76,7 @@ export function AppLayout() {
       useDownloadsView.getState().setInspectorVisible(false)
       useDownloadsSelection.getState().clearSelection()
     }
-    navigate(path)
+    return navigate(path)
   })
 
   return (
@@ -107,8 +125,17 @@ export function AppLayout() {
                 'bg-transparent shadow-none md:peer-data-[variant=inset]:shadow-none'
             )}
           >
+            <RendererSubmissionNotice
+              className="mx-4 mb-2 mt-12"
+              onOpenDownloads={() => void navigate('/downloads/all')}
+            />
             <div className="min-h-0 flex-1 overflow-hidden">
-              <Outlet />
+              <div hidden={!settingsActive} className="h-full min-h-0">
+                {retainedSettings.current}
+              </div>
+              <div hidden={settingsActive} className="h-full min-h-0">
+                {!settingsActive && outlet}
+              </div>
             </div>
             <WebConnectionNotice />
           </SidebarInset>
@@ -116,10 +143,13 @@ export function AppLayout() {
         {__NIO_TARGET__ === 'electron' && <DesktopMenuContext />}
         <MenuNavigationFocus />
         <RemoveTasksDialogHost />
+        <RedownloadOverwriteDialogHost />
+        <OperationDialogHost />
         <EngineDiagnosticsDialogHost />
         {__NIO_TARGET__ === 'web' && <AddTaskDialogHost />}
+        {__NIO_TARGET__ === 'web' && <WindowTorrentDrop />}
       </PlatformServicesProvider>
-      <Toaster />
+      <RendererToaster />
     </TooltipProvider>
   )
 }

@@ -84,7 +84,9 @@
       "outsideRoots": "Denne mappen er utenfor de tillatte plasseringene.",
       "permissionDenied": "Du har ikke tillatelse til å bruke denne mappen.",
       "tooLarge": "Stien eller mappenavnet har for mange tegn.",
-      "unavailable": "Serveren kunne ikke fullføre denne forespørselen. Prøv igjen."
+      "unavailable": "Serveren kunne ikke fullføre denne forespørselen. Prøv igjen.",
+      "notFile": "Select a readable regular file.",
+      "unsupportedFileType": "This file extension is not supported."
     },
     "fallback": "Den forespurte mappen er utilgjengelig. Viser {{path}}.",
     "folderName": "Mappenavn",
@@ -123,7 +125,34 @@
     "title": "Velg servermappe",
     "unknownOutcome": "Opprettelsen kunne ikke bekreftes. Oppdater for å kontrollere før du oppretter en ny mappe her.",
     "up": "Opp ett nivå",
-    "viewOptions": "Visningsvalg"
+    "viewOptions": "Visningsvalg",
+    "openFileTitle": "Select a file",
+    "saveFileTitle": "Save a file",
+    "fileDescription": "Browse files on the Nio Downloader server.",
+    "selectFile": "Select file",
+    "saveFile": "Use this filename",
+    "files": "Files and folders",
+    "fileName": "File name",
+    "emptyFiles": "This folder is empty.",
+    "fileErrors": {
+      "invalidPath": "Enter a valid absolute path.",
+      "outsideRoots": "This path is outside the allowed locations.",
+      "notFound": "This path no longer exists.",
+      "permissionDenied": "You do not have permission to use this path.",
+      "invalidName": "Enter a valid file name.",
+      "tooLarge": "This path or file name is too long."
+    },
+    "selectedFilePath": "Selected file",
+    "file": {
+      "chooseOnServer": "Choose a file on the server using this picker.",
+      "singleFile": "Choose one file at a time.",
+      "wrongType": "Choose a file with one of these extensions: {{extensions}}.",
+      "pathUnavailable": "This file’s location is unavailable. Click to choose it instead.",
+      "choose": "Choose a file",
+      "dropHint": "Drop a file here or click to choose",
+      "browseHint": "Click to browse files",
+      "change": "Click to replace"
+    }
   },
   "directoryPreferences": {
     "addFavorite": "Legg til favoritt",
@@ -289,6 +318,10 @@
         "responsibility": "Du er ansvarlig"
       },
       "language": "Språk",
+      "languages": {
+        "chinese": "简体中文",
+        "english": "English"
+      },
       "localConsent": "Valget ditt lagres på denne enheten.",
       "quit": "Avslutt",
       "retry": "Prøv igjen",
@@ -340,13 +373,27 @@
         "unknownOption": "Ukjent kommandolinjealternativ."
       }
     },
-    "help": "Bruk:\n  nio-admin pairing pending [--json]\n  nio-admin pairing approve <user-code> [--json]\n  nio-admin pairing deny <user-code> [--json]\n\nKommandoen kommuniserer bare med den kjørende Nio Downloader-serveren via containerens loopback-grensesnitt.",
+    "help": "Bruk:\n  nio-admin pairing pending [--json]\n  nio-admin pairing approve <user-code> [--json]\n  nio-admin pairing deny <user-code> [--json]\n  nio-admin extension pair\n\nKommandoen kommuniserer bare med den kjørende Nio Downloader-serveren via containerens loopback-grensesnitt.",
     "pending": {
       "none": "Ingen ventende sammenkoblingsforespørsler.",
       "row": "{{userCode}}  {{clientName}}  {{clientVersion}}  utløper om {{ttl}}",
       "ttl": "{{minutes}} min {{seconds}} s"
     },
-    "usageHint": "Kjør `nio-admin --help` for bruksanvisning."
+    "usageHint": "Kjør `nio-admin --help` for bruksanvisning.",
+    "extension": {
+      "heading": "Pending browser Extension pairing requests",
+      "identityNotice": "Verify that you initiated this request. Origin and claimed identity alone do not prove who is connecting. Terminal recording can capture the pairing code.",
+      "row": "{{index}}. {{browser}} [{{identity}}] Origin: {{origin}}; claimed ID: {{claimedId}}; Server: {{authority}}; {{seconds}} s remaining",
+      "select": "Enter the number of one request (Ctrl+C to exit): ",
+      "code": "Pairing code: {{code}}",
+      "instructions": "Type this code into the browser Extension. It expires at the original deadline. Ctrl+C closes this view without approving or denying the request.",
+      "none": "No pending Extension pairing requests. Start pairing in the Extension, then run this command again. If requests remain absent, check the remote Extension configuration.",
+      "ended": "The selected pairing request has ended. Check the Extension for its outcome.",
+      "ttyRequired": "Extension pairing requires interactive input, output and error terminals. Piping, redirection and JSON output are not supported.",
+      "cancelled": "Pairing code view closed. No approval or denial was sent.",
+      "invalidSelection": "Select exactly one listed request by its number.",
+      "unavailable": "The selected request expired, ended or changed. Start a new pairing attempt in the Extension."
+    }
   },
   "operatorUnlock": {
     "error": "Ugyldig operatørtoken. Kontroller NIO_OPERATOR_TOKEN eller <dataDir>/operator-token på vertsmaskinen og prøv igjen.",
@@ -517,7 +564,7 @@
           },
           "lastChecked": "Kontrollert {{time}}",
           "loadFailed": "Kunne ikke kjøre motordiagnostikk.",
-          "nioEngine": "aria2 Nio Downloader",
+          "niodownloaderEngine": "aria2 Nio Downloader",
           "open": "Diagnostiser",
           "port": {
             "available": "{{port}} (ledig)",
@@ -814,6 +861,8 @@
         "moveQueueUp": "Flytt opp i køen",
         "openFile": "Åpne fil",
         "openFileFailed": "Kunne ikke åpne filen",
+        "openFileAppFailed": "Systemet kunne ikke åpne denne filen. Kontroller at standardappen fortsatt er installert, eller åpne mappen for å velge en annen app.",
+        "openFileFailedHint": "Kontroller at filen fortsatt finnes, og at du har tillatelse til å åpne den.",
         "openFolder": "Åpne mappe",
         "pause": "Sett på pause",
         "pauseTooltipBatch": "Sett på pause: {{n}} / {{total}} i utvalget",
@@ -846,7 +895,14 @@
         "selectFilesFailed": "Kunne ikke åpne filvalget.",
         "singleTaskFailed": "{{name}}: {{reason}}",
         "stopSeeding": "Stopp deling",
-        "stopSeedingTooltipBatch": "Stopp deling: {{n}} / {{total}} i utvalget"
+        "stopSeedingTooltipBatch": "Stopp deling: {{n}} / {{total}} i utvalget",
+        "redownload": "Re-download",
+        "redownloadWithDialog": "Re-download with options... (Alt+Click)",
+        "redownloadTooltipBatch": "Re-download {{n}} of {{total}} selected",
+        "redownloadOverwriteTitle": "File Already Exists",
+        "redownloadOverwriteDescription": "“{{name}}” already exists in the download directory. Re-downloading will overwrite or rename it. Do you want to continue?",
+        "redownloadCredentialsExpired": "Original request options have expired. Please review and submit.",
+        "redownloadStarted": "Re-download started"
       },
       "column": {
         "connections": "Noder",
@@ -900,14 +956,24 @@
             "activeSeconds_other": "{{count}} sekunder",
             "noDataQualityIssues": "Ingen registreringsadvarsler.",
             "sampleCount_one": "{{count}} måling",
-            "sampleCount_other": "{{count}} målinger"
+            "sampleCount_other": "{{count}} målinger",
+            "noSamples": "Ingen målinger",
+            "overview": "Historikkoversikt",
+            "rangeStart": "Start på intervallet",
+            "rangeEnd": "Slutt på intervallet",
+            "earlier": "Eldre historikk",
+            "later": "Nyere historikk",
+            "zoomIn": "Zoom inn",
+            "zoomOut": "Zoom ut",
+            "showAll": "Vis alt",
+            "following": "Følger nyeste data",
+            "followLatest": "Tilbake til nyeste"
           },
           "collecting": "Samler overføringsdata…",
-          "coverageGap": "Registreringen ble avbrutt.",
           "download": "Nedlasting",
           "lifetimeEmpty": "Samlet historikk er ikke tilgjengelig ennå.",
           "loading": "Laster inn aktivitet…",
-          "noSessionHistory": "Ingen overføring registrert i denne appøkten.",
+          "noSessionHistory": "Ingen nylig overføring registrert.",
           "noTraffic": "Ingen nettverkstrafikk akkurat nå.",
           "notAvailable": "Ikke tilgjengelig",
           "range": {
@@ -916,7 +982,7 @@
             "label": "Tidsrom for overføring",
             "latest": "Siste 60 sekunder",
             "lifetime": "Hele perioden",
-            "session": "Økt (60 s)"
+            "session": "Siste 60 s"
           },
           "retry": "Prøv igjen",
           "stale": {
@@ -971,7 +1037,7 @@
           },
           "transferTitle": {
             "lifetime": "Samlet overføring",
-            "session": "Overføring i økten"
+            "session": "Nylig overføring"
           },
           "unavailable": "Samlet aktivitet er utilgjengelig.",
           "upload": "Opplasting"
@@ -1137,6 +1203,7 @@
         "banner": "Oppgavelisten kan være utdatert — kobler til på nytt…"
       },
       "stats": {
+        "title": "Overføringsstatus",
         "downSpeed": "Nedlastingshastighet",
         "engineOffline": "Motor frakoblet",
         "engineOk": "Motoren er klar",
@@ -1233,10 +1300,14 @@
       "ffmpeg": {
         "notInstalled": "FFmpeg er ikke installert på dette systemet.",
         "optionalDegraded": "Mediefunksjonene i dette programtillegget er utilgjengelige inntil ffmpeg er installert.",
-        "requiredByPlugin": "Dette programtillegget krever ffmpeg. Installer det og prøv igjen.",
+        "requiredByPlugin": "Du kan installere utvidelsen nå. Konfigurer en kompatibel FFmpeg-versjon før du aktiverer eller kjører den.",
         "title": "FFmpeg-krav",
         "versionMismatch": "FFmpeg {{version}} er installert."
       }
+    },
+    "runtime": {
+      "ffmpegUnavailable": "FFmpeg er ikke tilgjengelig. Configure FFmpeg in Settings → Integration → Media Tools.",
+      "ffmpegIncompatible": "FFmpeg-versjonen oppfyller ikke kravene til denne utvidelsen. Configure FFmpeg in Settings → Integration → Media Tools."
     }
   },
   "plugins": {
@@ -1302,6 +1373,8 @@
       "advanced": "Avansert",
       "attentionGeneric": "Se loggene for detaljer.",
       "attentionTitle": "Dette programtillegget rapporterte et problem",
+      "runtimeStartFailed": "Kjøremiljøet for programtillegget kunne ikke starte",
+      "runtimeFailed": "Kjøremiljøet for programtillegget stoppet uventet",
       "author": "Utvikler",
       "back": "Alle programtillegg",
       "disabled": "Deaktivert",
@@ -1332,7 +1405,9 @@
       "uninstallConfirm": "Avinstallere dette programtillegget? Dataene blir fjernet.",
       "uninstallConfirmDesc": "Dette fjerner programtillegget og de lagrede innstillingene fra Nio Downloader.",
       "uninstallConfirmTitle": "Avinstallere {{name}}?",
-      "viewIssue": "Vis problem"
+      "viewIssue": "Vis problem",
+      "operations": "Operations",
+      "operationsFailed": "The operation panel could not load. Try again."
     },
     "diagnostics": {
       "callGraph": {
@@ -1479,6 +1554,8 @@
       "github.spec": "GitHub-kodelager (owner/repo[@tag])",
       "install": "Installer programtillegg",
       "lead": "Lim inn en adresse til et programtillegg, velg en .moext-fil eller slipp en fil i inndatafeltet.",
+      "reviewLead": "Se gjennom tillatelsene til programtillegget før installasjon.",
+      "preparing": "Klargjør…",
       "local": "Lokal fil",
       "local.pick": "Velg en .moext-fil",
       "localPrepareFailed": "Kunne ikke klargjøre denne programtilleggsfilen: {{detail}}",
@@ -1488,12 +1565,21 @@
       "title": "Legg til programtillegg",
       "url": "URL",
       "url.spec": "Pakke-URL (.moext)",
-      "warning": "Før installering: Fortsett bare hvis du stoler på utvikleren og forventer at tillegget bruker tilgangen som er oppført ovenfor."
+      "warning": "Før installering: Fortsett bare hvis du stoler på utvikleren og forventer at tillegget bruker tilgangen som er oppført ovenfor.",
+      "officialVerified": "Offisiell Nio Downloader-signatur bekreftet",
+      "officialSignatureInvalid": "Kunne ikke bekrefte den offisielle signaturen til programtillegget. Oppdater katalogen.",
+      "officialBuiltinOnly": "Denne versjonen krever rettigheter for innebygde programtillegg. Installer en nyere versjon som støtter valgfri installasjon.",
+      "builtinAlreadyInstalled": "Dette programtillegget er allerede innebygd. Bruk oppdateringsfunksjonen.",
+      "hostIncompatible": "Dette programtillegget krever Nio Downloader {{required}}; gjeldende versjon: {{current}}. Oppgrader eller bytt til en kompatibel Nio Downloader-versjon og prøv igjen.",
+      "installed": "Installert",
+      "optionalHint": "Av som standard; slå på ved behov",
+      "optionalLater": "Du kan endre valgfrie tillatelser i utvidelsens innstillinger etter installasjon."
     },
     "lead": "Legg til små funksjoner i Nio Downloader. Behold dem du stoler på, og slå av resten.",
     "logs": {
       "clear": "Tøm",
-      "copy": "Kopier",
+      "clearFailed": "Kunne ikke tømme loggene. Prøv igjen.",
+      "copy": "Kopier sladdede logger",
       "empty": "Ingen loggoppføringer ennå",
       "emptyFiltered": "Ingen oppføringer samsvarer med dette nivået.",
       "emptyHint": "Ny aktivitet fra programtillegget vises automatisk her.",
@@ -1524,7 +1610,8 @@
       },
       "ffmpeg": {
         "plain": "Behandler lyd eller video.",
-        "strong": "Bruk FFmpeg"
+        "strong": "Bruk FFmpeg",
+        "requirement": "Processes audio or video. First, <settings>install or select FFmpeg in Settings</settings>."
       },
       "fs": {
         "storage": {
@@ -1576,6 +1663,18 @@
       },
       "unknown": {
         "plain": "Ukjent tillatelse."
+      },
+      "metadata": {
+        "strong": "Lese og skrive oppgavemetadata",
+        "plain": "Lagrer informasjon som denne utvidelsen lager for nedlastingsoppgaver."
+      },
+      "files.selected.read": {
+        "strong": "Read files selected for this operation",
+        "plain": "Each operation needs your input selection. Other files are not authorized."
+      },
+      "files.selected.write": {
+        "strong": "Save a new file for this operation",
+        "plain": "Save at the location you confirm without replacing existing files."
       }
     },
     "permissions": {
@@ -1605,7 +1704,7 @@
       "updateInstalled": "Oppdateringen er installert.",
       "updateTo": "Oppdater til v{{version}}",
       "updated": "oppdatert {{date}}",
-      "viewOnWebsite": "Vis på github.com/NotUrNio/Nio-Downloader"
+      "viewOnWebsite": "Vis på niodownloader.app"
     },
     "search": "Finn et programtillegg",
     "searchNoMatch": "Ingen programtillegg samsvarer med «{{query}}»",
@@ -1621,6 +1720,30 @@
       "optional": "Valgfri tilgang",
       "review": "Krever gjennomgang",
       "safe": "Ser trygt ut"
+    },
+    "security": {
+      "blocked": "Blokkert av sikkerhetsgrunner",
+      "pending": "Koble til internett og se etter oppdateringer før du aktiverer denne utvidelsen.",
+      "unavailable": "Sikkerhetspolicyen kunne ikke bekreftes. Se etter oppdateringer for å prøve igjen.",
+      "malware": "Denne utvidelsen er identifisert som skadelig.",
+      "vulnerability": "Denne versjonen av utvidelsen har en sikkerhetssårbarhet.",
+      "compromised": "Distribusjonen av denne utvidelsen er kompromittert.",
+      "fixedVersion": "En rettelse er tilgjengelig i versjon {{version}}.",
+      "details": "Vis sikkerhetsvarsel"
+    },
+    "network": {
+      "timeout": "Tidsavbrudd for tilkoblingen",
+      "dns": "DNS-oppslag mislyktes",
+      "proxyAuth": "Proxyautentisering mislyktes",
+      "proxyConnect": "Kunne ikke koble til proxyen",
+      "certificate": "Sertifikat- eller TLS-feil",
+      "http": "HTTP {{status}}",
+      "cancelled": "Forespørselen ble avbrutt",
+      "network": "Nettverksforespørselen mislyktes",
+      "cached": "Oppdatering mislyktes; viser mellomlagrede programtillegg",
+      "unavailable": "Kunne ikke laste katalogen for programtillegg",
+      "direct": "Direkte tilkobling til {{host}} mislyktes: {{reason}}",
+      "viaProxy": "Tilkobling til {{host}} via proxy {{proxy}} mislyktes: {{reason}}"
     }
   },
   "quit": {
@@ -1643,7 +1766,7 @@
       },
       "resources": {
         "acknowledgments": "Takk til",
-        "acknowledgmentsDescription": "Se bidragsyterne på github.com/NotUrNio/Nio-Downloader",
+        "acknowledgmentsDescription": "Se bidragsyterne på niodownloader.app",
         "changelog": "Endringslogg",
         "manual": "Brukerhåndbok",
         "manualDescription": "Les brukerhåndboken",
@@ -1652,7 +1775,7 @@
         "repositoryDescription": "Se koden på GitHub",
         "title": "Ressurser",
         "website": "Offisielt nettsted",
-        "websiteDescription": "Besøk github.com/NotUrNio/Nio-Downloader"
+        "websiteDescription": "Besøk niodownloader.app"
       },
       "tagline": "Før innhold går tapt, ta vare på det som virkelig betyr noe, og gi skjønnheten en plass i samlingen din.",
       "update": {
@@ -1725,6 +1848,14 @@
         "secret": "RPC-hemmelighet",
         "secretDesc": "Kreves for RPC-tilkoblinger.",
         "title": "RPC"
+      },
+      "configFile": {
+        "title": "Konfigurasjonsfil",
+        "serverTitle": "Serverens konfigurasjonsfil",
+        "openDirectory": "Åpne mappe",
+        "copyPath": "Kopier sti",
+        "copied": "Kopiert",
+        "actionFailed": "Handlingen kunne ikke fullføres. Prøv igjen."
       }
     },
     "appearance": {
@@ -1989,10 +2120,7 @@
         },
         "split": "Maks. tilkoblinger per fil",
         "splitDesc": "Tilkoblinger som brukes til å laste ned én fil.",
-        "title": "Ytelse",
-        "maxSpeed": "Maksimal hastighet",
-        "maxSpeedDesc": "Bruker maksimalt antall parallelle tilkoblinger og segmenter for høyest hastighet.",
-        "maxSpeedNotice": "Faktisk hastighet begrenses av serveren; enkelte servere avviser mange tilkoblinger."
+        "title": "Ytelse"
       },
       "reliability": {
         "connectTimeout": "Tidsgrense for tilkobling (s)",
@@ -2024,9 +2152,10 @@
         "autoSection": "Automatiske regler",
         "autoSectionDesc": "Disse reglene gjelder bare i automatisk modus.",
         "bandwidthPending": "Angi begge tilkoblingshastighetene for å ta i bruk denne grensen.",
-        "bandwidthUsed": "Nio Downloader kan bruke opptil {{nio}}%.",
+        "bandwidthUsed": "Nio Downloader kan bruke opptil {{niodownloader}}%.",
         "baseDownload": "Nedlasting",
         "baseDownloadDesc": "Maksimal nedlastingshastighet til daglig bruk.",
+        "unitFor": "Enhet for {{field}}",
         "baseSection": "Standardgrenser",
         "baseSectionDesc": "Brukes til daglige nedlastinger og overholdes i alle moduser.",
         "baseUpload": "Opplasting",
@@ -2051,7 +2180,7 @@
         "fillFromPeak": "Anslå tilkoblingshastighet",
         "fillFromPeakHint": "Basert på de raskeste nylige nedlastingene og opplastingene.",
         "headroomPercent": "Reserver til andre apper",
-        "headroomPercentDesc": "Reserverer nå {{reserved}}%; Nio Downloader kan bruke opptil {{nio}}%.",
+        "headroomPercentDesc": "Reserverer nå {{reserved}}%; Nio Downloader kan bruke opptil {{niodownloader}}%.",
         "linkDown": "Tilkoblingens nedlastingshastighet",
         "linkDownDesc": "Nedlastingshastigheten internettilkoblingen kan oppnå.",
         "linkUp": "Tilkoblingens opplastingshastighet",
@@ -2172,7 +2301,7 @@
         "prompt": {
           "accept": "Integrer",
           "decline": "Ikke nå",
-          "detail": "Nio Downloader legger til en skrivebordsoppføring og et ikon under brukerdatamappen og registrerer seg som behandler for nio:-lenker, magnetlenker og .torrent-filer. Da kan nettleseren og Nio Downloader-utvidelsen starte Nio Downloader og overføre nedlastinger til det. Ingenting skrives utenfor hjemmemappen, og du kan angre dette fra Innstillinger.",
+          "detail": "Nio Downloader legger til en skrivebordsoppføring og et ikon under brukerdatamappen og registrerer seg som behandler for niodownloader:-lenker, magnetlenker og .torrent-filer. Da kan nettleseren og Nio Downloader-utvidelsen starte Nio Downloader og overføre nedlastinger til det. Ingenting skrives utenfor hjemmemappen, og du kan angre dette fra Innstillinger.",
           "message": "La dette Nio Downloader-AppImage registrere seg i skrivebordsmiljøet?",
           "title": "Integrere Nio Downloader med skrivebordet?"
         },
@@ -2325,19 +2454,19 @@
             "version": "Versjon"
           },
           "reason": {
-            "installFailed": "Pakkebehandleren kunne ikke installere @nio/cli. Se gjennom detaljene og prøv igjen, eller kjør kommandoen manuelt.",
+            "installFailed": "Pakkebehandleren kunne ikke installere nio-cli. Se gjennom detaljene og prøv igjen, eller kjør kommandoen manuelt.",
             "managerMissing": "Fant ingen støttet pakkebehandler. Installer npm, pnpm, Yarn Classic, Bun eller Volta, og kontroller igjen.",
             "network": "Pakkebehandleren kunne ikke nå registeret. Kontroller nettverket eller registerkonfigurasjonen og prøv igjen.",
             "nodeMissing": "Fant ikke Node.js 22 eller nyere. Installer Node.js og kontroller igjen.",
             "nodeTooOld": "Node.js 22 eller nyere kreves. Fant {{version}}.",
-            "pathMissing": "Pakken ble installert, men nio finnes ikke i PATH. Åpne en ny terminal eller legg den oppgitte installasjonsmappen til i PATH.",
-            "pathShadowed": "En annen nio-programfil kommer tidligere i PATH. Fjern den eldre oppføringen eller rett PATH, og kontroller igjen.",
+            "pathMissing": "Pakken ble installert, men niodownloader finnes ikke i PATH. Åpne en ny terminal eller legg den oppgitte installasjonsmappen til i PATH.",
+            "pathShadowed": "En annen niodownloader-programfil kommer tidligere i PATH. Fjern den eldre oppføringen eller rett PATH, og kontroller igjen.",
             "permission": "Pakkebehandleren kan ikke skrive til den globale installasjonsplasseringen. Bruk en Node.js-versjonsbehandler eller et installasjonsprefiks brukeren kan skrive til; ikke bruk sudo.",
             "sandboxed": "Installering med ett klikk er utilgjengelig i denne sandkassepakken. Kopier kommandoen og kjør den i en terminal.",
             "timeout": "Installeringen tok for lang tid og ble stoppet. Kontroller nettverket og prøv igjen.",
             "unknown": "Nio Downloader kunne ikke kontrollere kommandolinjeverktøyet. Prøv igjen eller kjør den kopierte kommandoen manuelt.",
             "unsupportedWeb": "Installering med ett klikk er bare tilgjengelig i skrivebordsappen. Kopier kommandoen og kjør den på Nio Downloader-verten.",
-            "verifyFailed": "Installeringen ble fullført, men Nio Downloader kunne ikke bekrefte den aktive nio-programfilen."
+            "verifyFailed": "Installeringen ble fullført, men Nio Downloader kunne ikke bekrefte den aktive niodownloader-programfilen."
           },
           "status": {
             "checking": "Kontrollerer",
@@ -2358,7 +2487,7 @@
         "binaryPath": "Egendefinert FFmpeg-sti",
         "browse": "Bla gjennom…",
         "candidateKind": {
-          "env": "NIO_FFMPEG_BIN",
+          "env": "NIODOWNLOADER_FFMPEG_BIN",
           "manual": "Egendefinert sti",
           "path": "Systemets PATH",
           "userData": "Nio Downloader-datamappe"
@@ -2524,7 +2653,7 @@
         "bypass": "Koble direkte til",
         "bypassDesc": "Ett domene, én IP-adresse eller ett CIDR-område per linje. Start med . for bare å samsvare med underdomener. Filnedlastinger støtter ikke jokertegnet *.",
         "bypassPlaceholder": "localhost\n127.0.0.1\n.local",
-        "bypassScopeNote": "Bare filnedlastinger og appoppdateringer",
+        "bypassScopeNote": "Bare nedlastinger, programtillegg og appoppdateringer",
         "enable": "Aktiver mellomtjener",
         "enableDesc": "Bruk en mellomtjener for tilkoblingene som er valgt nedenfor.",
         "hidePassword": "Skjul passord",
@@ -2551,7 +2680,9 @@
         "server": "Server",
         "showPassword": "Vis passord",
         "title": "Mellomtjener",
-        "user": "Brukernavn"
+        "user": "Brukernavn",
+        "scopePlugins": "Installasjon og oppdatering av programtillegg",
+        "scopePluginsDesc": "Bruk proxy for katalogen, pakker, oppdateringer og sikkerhetsregler for programtillegg."
       },
       "reachability": {
         "addEndpoint": "Legg til kontrolltjeneste",
@@ -2751,7 +2882,7 @@
       }
     },
     "recovery": {
-      "finalizeRenameFailed": "Kunne ikke endre filnavnet. Nedlastingsfilen beholder endelsen .nio.",
+      "finalizeRenameFailed": "Kunne ikke endre filnavnet. Nedlastingsfilen beholder endelsen .niodownloader.",
       "metaMissing": "Torrentmetadata mangler. Kan ikke starte deling.",
       "reseedFailed": "Nedlastingen er fullført, men deling kunne ikke startes.",
       "startup": {
@@ -2894,7 +3025,7 @@
     "openTorrentFile": "Åpne torrentfil",
     "preferences": "Innstillinger",
     "quit": "Avslutt",
-    "showNioDownloader": "Vis Nio Downloader"
+    "showNio Downloader": "Vis Nio Downloader"
   },
   "units": {
     "bytes": {
@@ -2925,5 +3056,322 @@
     "waitingMerged": "Ventende oppgaver vises nå under Aktive. Denne visningen er åpnet.",
     "stoppedSplit": "Stoppede oppgaver er gruppert under Fullførte og Feil. Alle nedlastinger er åpnet.",
     "invalidStatus": "Ugyldig nedlastingskategori. Alle nedlastinger er åpnet."
+  },
+  "mediaMerge": {
+    "title": "Merge audio and video",
+    "description": "Combine two files without re-encoding. Original files are kept. Audio-only and video-only inputs are detected automatically.",
+    "videoInput": "Video file",
+    "audioInput": "Audio file",
+    "output": "Output file",
+    "provider": "Plugin",
+    "browse": "Browse…",
+    "browseField": "Browse {{field}}",
+    "required": "Choose a file or enter its full path.",
+    "outputHint": "Use a new .mp4 or .mkv filename. Existing files are never overwritten. If the codecs cannot be copied to MP4, try MKV.",
+    "noPlugin": "Install and enable a media merge plugin. FFmpeg must be configured in Settings > Integration > Media Tools.",
+    "serverPaths": "Select files on the Nio Downloader server. Files on this computer are not uploaded.",
+    "start": "Merge",
+    "running": "Merging…",
+    "cancelling": "Cancelling…",
+    "completed": "Merged successfully",
+    "cancelled": "Merge cancelled",
+    "failed": "Merge failed",
+    "invalidSelection": "Select two completed, single-file downloads.",
+    "jobMissing": "This merge is no longer available.",
+    "busy": "Another merge is already running.",
+    "pluginUnavailable": "The media merge plugin is unavailable.",
+    "absolutePaths": "Enter full, absolute file paths.",
+    "invalidFiles": "Choose two non-empty media files.",
+    "sameInput": "Choose two different input files.",
+    "outputFormat": "Use an .mp4 or .mkv output filename.",
+    "outputExists": "The output already exists. Choose a new filename.",
+    "invalidOutput": "The plugin did not produce a valid output file.",
+    "again": "Merge another file",
+    "pluginDisabled": "Enable this plugin to merge files.",
+    "choose": {
+      "videoInput": "Choose video",
+      "audioInput": "Choose audio",
+      "output": "Choose a save location"
+    },
+    "hint": {
+      "videoInput": "The picture for your merged file",
+      "audioInput": "The sound for your merged file",
+      "output": "Save as MP4 or MKV"
+    },
+    "preserveOriginals": "Original files are kept",
+    "format": "Output format"
+  },
+  "legacyImport": {
+    "navigation": "Migration",
+    "title": "Migration",
+    "pausedDescription": "Choose which Nio Downloader v1 downloads to import. They won’t start automatically.",
+    "settingsTitle": "Migration",
+    "settingsDescription": "Import your downloads from Nio Downloader v1.",
+    "settingsAction": "Open migration",
+    "pickSource": "Choose the Nio Downloader v1 data folder",
+    "source": "From",
+    "changeSource": "Change folder…",
+    "noSource": "Choose the folder containing your Nio Downloader v1 data",
+    "discovery": "Downloads found: {{count}}",
+    "preserveFiles": "Downloaded files stay in their original location.",
+    "chooseTasks": "Choose downloads",
+    "skip": "Not now",
+    "skippedHint": "Du kan migrere senere fra {{settings}} → {{advanced}}.",
+    "back": "Back",
+    "loading": "Looking for your old downloads…",
+    "empty": "There are no tasks to migrate from this folder.",
+    "continueBefore": "Before continuing:",
+    "capabilityLimit": "This task needs to be downloaded again. Choose a new folder to keep the original files.",
+    "running": "Nio Downloader v1 may still be running. Quit it, then check again.",
+    "recheck": "Check again",
+    "search": "Search downloads",
+    "selectAll": "Select all",
+    "skipped": "Skipped: {{count}}",
+    "backupNote": "Your task list is backed up before import. Downloaded files stay in place.",
+    "backingUp": "Backing up your task list…",
+    "committing": "Adding your downloads…",
+    "progress": "Migration progress",
+    "processed": "{{done}} / {{total}} processed",
+    "stop": "Stop migration",
+    "stopTitle": "Stop migration?",
+    "stopDescription": "Downloads already imported will be kept. You can import the rest later.",
+    "resultTitle": "Migration complete",
+    "importedCount": "Imported {{count}}",
+    "resultDescription": "Your imported tasks are now in Downloads.",
+    "details": "View details",
+    "exportReport": "Save report…",
+    "retry": "Migrate remaining",
+    "viewTasks": "View downloads",
+    "freshDownload": "Download again…",
+    "freshDescription": "Choose where to save the new download. Nio Downloader will create a separate folder and open the download form for you to confirm. It will start from the beginning and leave your old files untouched.",
+    "freshDestination": "Choose where to save the new download",
+    "chooseDestination": "Choose another location…",
+    "reasons": {
+      "fresh-download-required": "Needs a new download",
+      "verification-required": "Existing files need checking",
+      "metadata-required": "Original torrent file needed",
+      "selection-required": "Choose which files to download",
+      "unsupported-options": "Download details need checking",
+      "invalid-record": "Couldn’t read this task",
+      "unsafe-path": "File location needs checking",
+      "already-imported": "Already imported",
+      "deleted-import": "Previously removed",
+      "path-conflict": "Another task uses this location",
+      "changed-source": "Old task data has changed",
+      "not-selected": "Not selected",
+      "stopped": "Not imported before stopping",
+      "commit-failed": "Import failed. You can try again."
+    },
+    "errors": {
+      "pageUnavailable": "Migration couldn’t open. Restart Nio Downloader and try again. Downloads already imported are kept.",
+      "failed": "The operation couldn’t be completed. Please try again.",
+      "consentRequired": "Accept the agreement before opening migration.",
+      "invalidSource": "No Nio Downloader v1 data was found here. Choose its original data folder.",
+      "unsafeSource": "This data folder can’t be read safely. Choose the original Nio Downloader v1 folder.",
+      "unsafeBackup": "A safe backup couldn’t be created, so importing has stopped.",
+      "tooLarge": "This task list is too large to import.",
+      "tooManySources": "Too many folders have been opened. Restart Nio Downloader and try again.",
+      "sourceNotAuthorized": "Select the old data folder using the folder picker.",
+      "expiredPreview": "This task list needs refreshing. Check again before importing.",
+      "changedSource": "The old task data has changed. Check again before importing.",
+      "running": "Nio Downloader v1 may still be running. Quit it, then check again.",
+      "invalidSelection": "The selected tasks have changed. Check the list again.",
+      "pathConflict": "Another task uses this file location. Check the list again.",
+      "busy": "An import is already running. Wait for it to finish.",
+      "unknownRun": "The import result is unavailable.",
+      "unknownTask": "This imported task is no longer available.",
+      "rescanRequired": "Choose the data folder again to import the remaining tasks.",
+      "metadataRequired": "Choose this task’s original torrent file first.",
+      "unsafePath": "Choose a folder you can access.",
+      "mirrorsUnsupported": "This task uses multiple download links. Copy the link you want to use and add a new download.",
+      "stopping": "Nio Downloader is closing. Reopen it to continue importing.",
+      "desktopOnly": "Open migration in the Nio Downloader desktop app.",
+      "metadataMismatch": "This torrent does not match the old task. Choose its original torrent file.",
+      "checkpointUnavailable": "This version can’t resume the old files. You can download again in a new folder.",
+      "activationSourceMissing": "Some original task information is missing. Download again in a new folder.",
+      "selectionRequired": "The previous file selection is unavailable. Choose the files again in a new download.",
+      "originalDirectoryRequired": "Choose the original folder shown here. Files moved to another location can’t be resumed.",
+      "payloadMissing": "Some original files are missing, including files previously left unselected. All are needed to resume this task. Download again in a new folder.",
+      "payloadUnsafe": "The original files can’t be updated safely because of file links or permissions. Keep them and download again in a new folder.",
+      "controlRequired": "The saved download progress is missing. Download again in a new folder.",
+      "activationUncertain": "Nio Downloader couldn’t safely resume this task. The original files are protected. You can download again in a new folder."
+    },
+    "resultIncompleteTitle": "Migration is incomplete",
+    "resultStoppedTitle": "Migration stopped",
+    "activationRequired": "Download again in a new folder to keep the original files.",
+    "chooseTorrent": "Choose torrent…",
+    "torrentFile": "Torrent file",
+    "verifyAndContinue": "Verify and continue",
+    "verifyDescription": "Nio Downloader will verify the original files, then continue with your previous file selection. While downloading, it may upload data and write shared pieces to unselected files. It won’t seed automatically when finished.",
+    "authorizeOriginalDirectory": "Choose the original download folder",
+    "verifyReady": "Verify your existing files to continue this download, or start again in a new folder.",
+    "trackersReadOnly": "This download keeps its original trackers. They can’t be changed here.",
+    "page": {
+      "stepsLabel": "Migration steps",
+      "steps": {
+        "select": "Choose downloads",
+        "import": "Import",
+        "result": "Review"
+      },
+      "foundSummary": "Download types",
+      "selectionSummary": "Selected",
+      "resultSummary": "Migration summary",
+      "countUnit": "total",
+      "notImported": "Not imported",
+      "skippedSummary": "Skipped",
+      "types": {
+        "http": "Direct links",
+        "bt": "Torrents",
+        "magnet": "Magnet links",
+        "unknown": "Other tasks"
+      },
+      "pathUnavailable": "Download location unavailable",
+      "filesStayTitle": "Your files stay where they are",
+      "filesStayDescription": "Migration won’t move or delete downloaded files.",
+      "nextTitle": "Only your downloads",
+      "nextDescription": "Your app settings stay the same.",
+      "footerNote": "Imported tasks will stay paused.",
+      "discoveryDescription": "Choose what to add to your download list. Some tasks need a new download or a check of the existing files.",
+      "previousVersion": "Nio Downloader v1",
+      "currentVersion": "Nio Downloader",
+      "introduction": "Choose the downloads you’d like to add to Nio Downloader.",
+      "selectionTitle": "Choose what to migrate",
+      "searchEmpty": "No matching downloads.",
+      "resultEmptyTitle": "No new downloads",
+      "resultEmptyDescription": "Open the details to see why each task was skipped.",
+      "resultIncompleteDescription": "Downloads already imported are kept. Review the details and try importing the rest again.",
+      "resultStoppedDescription": "Downloads already imported are kept. You can import the rest when you’re ready.",
+      "outcomes": {
+        "imported": "Imported",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "unprocessed": "Not imported"
+      },
+      "sourceDescription": "From {{name}}",
+      "assistantTitle": "Migration Assistant",
+      "backToSource": "Back to source",
+      "continue": "Continue",
+      "revealSource": "Show in folder",
+      "welcomeTitle": "Migrate your downloads",
+      "sourceFeedback": {
+        "retry": "Try again",
+        "unreadableTitle": "Unable to read downloads from this location",
+        "chooseFolder": "Choose the data folder used by the previous version of Nio Downloader.",
+        "readTitle": "Unable to read downloads",
+        "readDescription": "Check that this location is accessible, then try again.",
+        "pickTitle": "Unable to use the selected folder",
+        "pickDescription": "Try choosing the folder again. Your previous selection is still available.",
+        "revealTitle": "Unable to show this folder",
+        "revealDescription": "Check that this location is accessible, then try again.",
+        "discoverTitle": "Unable to look for previous downloads",
+        "discoverDescription": "Try again, or choose the previous Nio Downloader data folder yourself.",
+        "reading": "Reading downloads…"
+      },
+      "sourceTitle": "Where would you like to migrate from?",
+      "sourceIntroduction": "Import your download tasks from the previous version of Nio Downloader. You can choose what to migrate next. Your downloaded files will stay where they are.",
+      "sourceKind": "Downloads from the previous version",
+      "sourceHelp": "Choose the data folder used by Nio Downloader v1. Your downloaded files stay where they are.",
+      "noSourceDescription": "No downloads from the previous version of Nio Downloader were found. Choose another location to look for them.",
+      "progressTitle": "Migrating your downloads",
+      "progressDescription": "Your task list is being backed up and added to Nio Downloader.",
+      "selectGroup": "Select {{name}}",
+      "phases": {
+        "discovery": "Choose source",
+        "selection": "Choose content",
+        "progress": "Migration",
+        "result": "Result"
+      },
+      "groups": {
+        "http": "Direct links",
+        "bt": "Torrent downloads",
+        "magnet": "Magnet links",
+        "unknown": "Other downloads"
+      },
+      "groupDescriptions": {
+        "http": "A new download is needed",
+        "bt": "Existing files will be checked before continuing",
+        "magnet": "The original torrent file is needed",
+        "unknown": "Review the task details"
+      },
+      "groupCount_one": "{{count}} task",
+      "selectedNote_one": "Selected {{count}} task. After migration, tasks will stay paused and downloaded files will remain in place.",
+      "groupCount_other": "{{count}} tasks",
+      "selectedNote_other": "Selected {{count}} tasks. After migration, tasks will stay paused and downloaded files will remain in place.",
+      "run": {
+        "backup": "Back up task list",
+        "backupActive": "Saving a copy of your previous task list…",
+        "backupDone": "Backup saved",
+        "add": "Add downloads",
+        "waiting": "Waiting for the backup",
+        "completeDescription": "Your tasks are now in Downloads, paused until you’re ready to continue.",
+        "partialDescription": "Imported tasks are paused. You can retry the remaining tasks or view your downloads.",
+        "stoppedEmptyDescription": "No tasks were added. You can try again when you’re ready.",
+        "failedEmptyDescription": "No tasks were added. Review the details, then try again.",
+        "imported": "Imported",
+        "remaining": "Remaining"
+      }
+    },
+    "importSelected": "Migrate"
+  },
+  "rendererRecovery": {
+    "title": "Grensesnittet må gjenopprettes",
+    "description": "Nedlastinger fortsetter i bakgrunnen. Ulagrede endringer i skjemaet kan gå tapt.",
+    "recovering": "Gjenoppretter grensesnittet…",
+    "recover": "Gjenopprett grensesnitt",
+    "diagnostics": "Åpne diagnoselogger",
+    "downloads": "Åpne nedlastinger",
+    "failed": "Gjenoppretting er ikke tilgjengelig. Prøv igjen fra appmenyen.",
+    "restored": "Grensesnittet er gjenopprettet",
+    "wait": "Fortsett å vente",
+    "routeTitle": "Denne siden kunne ikke vises",
+    "submissionNotice": "Forrige innsending kan være fullført. Sjekk nedlastingene før du oppretter samme oppgave på nytt."
+  },
+  "pluginOperations": {
+    "requiredField": "Obligatorisk felt",
+    "run": "Run operation",
+    "runAgain": "Run again",
+    "background": "Operations continue when this panel is closed.",
+    "loading": "Loading operation…",
+    "unauthorized": "This session is no longer authorized. Sign in again.",
+    "disabled": "Enable this plugin to use its operations.",
+    "blocked": "This plugin is blocked or its permissions are changing.",
+    "unsupported": "This host does not support the operation requirements.",
+    "ffmpeg": "Configure FFmpeg in Settings → Integration → Media Tools.",
+    "busy": "Another operation is using these resources. Try again after it finishes.",
+    "unavailable": "This operation is unavailable.",
+    "draftExpired": "This selection expired. Reopen the operation and select the files again.",
+    "resourceLimit": "The operation exceeds the host resource limit or available disk space.",
+    "invalidSelection": "Select completed tasks with one local file each.",
+    "invalidFile": "Choose a regular, non-empty local file.",
+    "fileType": "The selected file type does not match this field.",
+    "outputExists": "The output already exists. Choose a different name.",
+    "fileChanged": "A selected file or directory changed. Select it again.",
+    "invalidGrant": "Select the files again before starting.",
+    "sameInput": "Choose two different input files.",
+    "invalidOutput": "The plugin did not produce a valid output.",
+    "invalidRequest": "Check the operation parameters and try again.",
+    "invalidValue": "Enter a valid value.",
+    "descriptorChanged": "The plugin changed. Reopen the operation.",
+    "jobMissing": "This operation is no longer available in this session.",
+    "cancelled": "The operation was cancelled.",
+    "failed": "The operation failed. See the plugin log for details.",
+    "interrupted": "The host stopped before this operation finished. It was not restarted.",
+    "publicationUncertain": "The host could not confirm output publication. Check the destination before trying again.",
+    "cleanupWarning": "Temporary files remain for safe recovery. The host did not delete uncertain files.",
+    "status": {
+      "accepted": "Queued",
+      "preparing": "Preparing files",
+      "running": "Running",
+      "validating": "Validating result",
+      "committing": "Saving output",
+      "cleaning": "Cleaning up",
+      "cancelling": "Cancelling",
+      "succeeded": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "interrupted": "Interrupted"
+    },
+    "confirmFileTitle": "Authorize file access",
+    "confirmFile": "Allow this operation to read the following file?"
   }
 }
