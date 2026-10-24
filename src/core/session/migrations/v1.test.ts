@@ -468,7 +468,7 @@ describe('migrate() schema guard (safety guard #7)', () => {
         version INTEGER PRIMARY KEY,
         applied_at INTEGER NOT NULL
       );
-      INSERT INTO schema_version (version, applied_at) VALUES (8, 0);
+      INSERT INTO schema_version (version, applied_at) VALUES (10, 0);
       CREATE TABLE task_metadata (niodownloader_id TEXT PRIMARY KEY);
     `)
 
@@ -528,7 +528,7 @@ describe('migrate() schema guard (safety guard #7)', () => {
     const rows = db
       .prepare('SELECT version FROM schema_version ORDER BY version')
       .all() as Array<{ version: number }>
-    expect(rows.map((r) => r.version)).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect(rows.map((r) => r.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     db.close()
   })
@@ -547,7 +547,7 @@ describe('migrate() schema guard (safety guard #7)', () => {
     // Inspector Activity persistence, and v4 adds durable Hook delivery and
     // finalize journals. V5 repairs terminal instances and v6 tracks seeding time.
     // All apply on a fresh DB.
-    expect(rows.map((r) => r.version)).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect(rows.map((r) => r.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table'")

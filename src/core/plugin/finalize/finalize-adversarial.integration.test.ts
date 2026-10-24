@@ -53,12 +53,12 @@ describe.runIf(process.platform !== 'win32' && existsSync(binary))(
     async function setup() {
       if (nfsRoot) expect((await statfs(nfsRoot)).type).toBe(0x6969)
       const local = await realpath(
-        await mkdtemp(path.join(os.tmpdir(), 'nio-adversarial-db-'))
+        await mkdtemp(path.join(os.tmpdir(), 'niodownloader-adversarial-db-'))
       )
       const root = await realpath(
-        await mkdtemp(path.join(nfsRoot ?? local, 'nio-adversarial-'))
+        await mkdtemp(path.join(nfsRoot ?? local, 'niodownloader-adversarial-'))
       )
-      const sourcePath = path.join(root, 'file.nio')
+      const sourcePath = path.join(root, 'file.niodownloader')
       const targetPath = path.join(root, 'file.bin')
       await writeFile(sourcePath, 'the only complete payload')
       const adapter = new NativeFinalizeFilesystemAdapter(binary)
@@ -149,8 +149,9 @@ describe.runIf(process.platform !== 'win32' && existsSync(binary))(
         )
         const [persisted] = await s.repository.listRecoverable()
         await expect(s.recovery.recover(persisted)).rejects.toThrow(
-          'quarantined'
+          'survivor is unavailable'
         )
+        expect(await s.repository.listRecoverable()).toHaveLength(1)
         const survivors = [
           s.plan.sourcePath,
           s.plan.targetPath,
@@ -298,6 +299,14 @@ describe.runIf(process.platform !== 'win32' && existsSync(binary))(
         expect(
           await readFile(pending.removalIntent!.quarantinePath, 'utf8')
         ).toBe('the only complete payload')
+        if (mutation === 'missing') {
+          await expect(s.recovery.recoverAll()).resolves.toBeUndefined()
+          expect(await s.repository.listRecoverable()).toHaveLength(1)
+          expect(
+            await readFile(pending.removalIntent!.quarantinePath, 'utf8')
+          ).toBe('the only complete payload')
+          return
+        }
         await s.recovery.recoverAll()
         expect(
           s.db

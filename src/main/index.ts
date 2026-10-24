@@ -1812,7 +1812,7 @@ async function initializeMainProcess(): Promise<void> {
     disposeIpcIngress = disposeDisclaimerIpc
 
     const onboardingWindow = windowManager.open('onboarding')
-    onboardingWindow.once('closed', () => {
+    onboardingWindow?.once('closed', () => {
       if (!gate.isAccepted()) {
         requestForcedQuit('disclaimer-window-closed')
       }

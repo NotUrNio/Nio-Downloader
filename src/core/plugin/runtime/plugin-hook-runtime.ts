@@ -132,7 +132,7 @@ export class PluginHookRuntime {
 
   pluginUnavailable(
     pluginId: string,
-    reason: 'disabled' | 'uninstalled' | 'quarantined',
+    reason: 'disabled' | 'uninstalled' | 'quarantined' | 'security_revoked',
     at: number
   ): Promise<number> {
     return this.retention.pluginUnavailable(pluginId, reason, at)

@@ -7,8 +7,10 @@ use std::io;
 
 #[test]
 fn copy_staging_preserves_source_timestamps() {
-    let base =
-        std::env::temp_dir().join(format!("nio-finalize-fs-copy-times-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!(
+        "nio-finalize-fs-copy-times-{}",
+        std::process::id()
+    ));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
@@ -102,7 +104,7 @@ fn held_remove_rejects_a_replaced_name_and_preserves_the_replacement() {
     std::fs::rename(base.join("artifact"), base.join("original-moved")).unwrap();
     std::fs::write(base.join("artifact"), b"replacement").unwrap();
 
-    assert!(remove_opened(&artifact, ".nio-finalize-remove-race", false).is_err());
+    assert!(remove_opened(&artifact, ".niodownloader-finalize-remove-race", false).is_err());
     assert_eq!(
         std::fs::read(base.join("artifact")).unwrap(),
         b"replacement"
@@ -127,7 +129,7 @@ fn held_remove_deletes_a_verified_directory_tree() {
     let root = open_root(base.to_str().unwrap()).unwrap();
     let artifact = open_artifact(&root, "artifact").unwrap();
 
-    remove_opened(&artifact, ".nio-finalize-remove-tree", false).unwrap();
+    remove_opened(&artifact, ".niodownloader-finalize-remove-tree", false).unwrap();
     assert!(!base.join("artifact").exists());
     let _ = std::fs::remove_dir_all(&base);
 }
@@ -146,7 +148,7 @@ fn held_remove_preserves_a_tree_changed_after_open() {
     let artifact = open_artifact(&root, "artifact").unwrap();
     std::fs::write(base.join("artifact/nested/inserted"), b"inserted").unwrap();
 
-    let quarantine_name = ".nio-finalize-remove-tree-race";
+    let quarantine_name = ".niodownloader-finalize-remove-tree-race";
     assert!(remove_opened(&artifact, quarantine_name, false).is_err());
     assert!(!base.join("artifact").exists());
     let quarantined = base.join(quarantine_name);
@@ -171,7 +173,7 @@ fn held_remove_resumes_an_exact_persisted_quarantine() {
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
-    let quarantine_name = ".nio-finalize-remove-resume";
+    let quarantine_name = ".niodownloader-finalize-remove-resume";
     std::fs::write(base.join(quarantine_name), b"preserved").unwrap();
     let root = open_root(base.to_str().unwrap()).unwrap();
     let artifact = open_artifact(&root, quarantine_name).unwrap();
@@ -210,7 +212,7 @@ fn darwin_rename_is_no_replace_for_files_and_directories() {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn rename_only_handles_do_not_read_large_payloads_or_authorize_removal() {
-    let base = std::env::temp_dir().join(format!("nio-rename-large-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!("niodownloader-rename-large-{}", std::process::id()));
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
     let file = std::fs::File::create(base.join("source")).unwrap();
@@ -234,7 +236,7 @@ fn rename_only_handles_do_not_read_large_payloads_or_authorize_removal() {
 #[test]
 fn private_isolation_checks_identity_permissions_and_resumes_removal() {
     use std::os::unix::fs::PermissionsExt;
-    let base = std::env::temp_dir().join(format!("nio-isolate-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!("niodownloader-isolate-{}", std::process::id()));
     std::fs::create_dir_all(base.join("private")).unwrap();
     std::fs::set_permissions(base.join("private"), std::fs::Permissions::from_mode(0o700)).unwrap();
     std::fs::write(base.join("source"), b"complete").unwrap();
@@ -275,7 +277,7 @@ fn private_isolation_checks_identity_permissions_and_resumes_removal() {
 #[cfg(target_os = "linux")]
 #[test]
 fn held_link_is_exclusive_and_preserves_the_source() {
-    let base = std::env::temp_dir().join(format!("nio-link-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!("niodownloader-link-{}", std::process::id()));
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
     std::fs::write(base.join("source"), b"complete").unwrap();
@@ -333,7 +335,7 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
         .unwrap()
         .as_nanos();
     let base =
-        std::path::Path::new(parent).join(format!("nio-mounted-{}-{nonce}", std::process::id()));
+        std::path::Path::new(parent).join(format!("niodownloader-mounted-{}-{nonce}", std::process::id()));
     std::fs::create_dir(&base).unwrap();
     let root = open_root(base.to_str().unwrap()).unwrap();
     assert_eq!(
@@ -341,18 +343,18 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
         filesystem_type,
         "test root must use the requested filesystem"
     );
-    std::fs::write(base.join("source.nio"), b"complete download").unwrap();
-    let artifact = super::open_artifact_for_rename(&root, "source.nio").unwrap();
+    std::fs::write(base.join("source.niodownloader"), b"complete download").unwrap();
+    let artifact = super::open_artifact_for_rename(&root, "source.niodownloader").unwrap();
     let error = super::rename_opened_no_replace(&artifact, &root, "target").unwrap_err();
     assert_eq!(crate::error::classify_error(&error), "rename_unsupported");
     assert_eq!(crate::error::os_code(&error), Some(libc::EINVAL));
     super::link_opened_no_replace(&artifact, &root, "target").unwrap();
     drop(artifact);
     assert_eq!(
-        std::fs::metadata(base.join("source.nio")).unwrap().ino(),
+        std::fs::metadata(base.join("source.niodownloader")).unwrap().ino(),
         std::fs::metadata(base.join("target")).unwrap().ino()
     );
-    let source = super::open_artifact_for_rename(&root, "source.nio").unwrap();
+    let source = super::open_artifact_for_rename(&root, "source.niodownloader").unwrap();
     assert_eq!(
         super::link_opened_no_replace(&source, &root, "target")
             .unwrap_err()
@@ -376,7 +378,7 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
     let survivor = super::open_artifact_for_rename(&root, "target").unwrap();
     super::remove_opened_preserving(&isolated, "payload", true, &survivor).unwrap();
     drop(isolated);
-    assert!(!base.join("source.nio").exists());
+    assert!(!base.join("source.niodownloader").exists());
     assert_eq!(
         std::fs::read(base.join("target")).unwrap(),
         b"complete download"
@@ -390,12 +392,13 @@ fn check_mounted_link_publication(parent: &str, filesystem_type: u64, isolation_
 fn competing_target_creation_never_overwrites_either_payload() {
     use std::io::Write;
     use std::sync::Barrier;
-    let base = std::env::temp_dir().join(format!("nio-rename-competition-{}", std::process::id()));
+    let base =
+        std::env::temp_dir().join(format!("niodownloader-rename-competition-{}", std::process::id()));
     std::fs::create_dir_all(&base).unwrap();
     let base = base.canonicalize().unwrap();
     let root = open_root(base.to_str().unwrap()).unwrap();
     for index in 0..16 {
-        let source = format!("source-{index}.nio");
+        let source = format!("source-{index}.niodownloader");
         let target = format!("target-{index}");
         std::fs::write(base.join(&source), b"download").unwrap();
         let artifact = super::open_artifact_for_rename(&root, &source).unwrap();

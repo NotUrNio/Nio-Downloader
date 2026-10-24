@@ -9,6 +9,28 @@ const MAX_FRAME_BYTES: usize = 64 * 1024;
 #[serde(tag = "op", rename_all = "snake_case")]
 pub(crate) enum Request {
     Capabilities,
+    CreatePrivateRoot {
+        request_id: u64,
+        root: u64,
+        name: String,
+    },
+    RemovePrivateRoot {
+        request_id: u64,
+        parent: u64,
+        name: String,
+        root: u64,
+    },
+    OpenSelectedFile {
+        request_id: u64,
+        root: u64,
+        relative: String,
+    },
+    CopySelectedFile {
+        request_id: u64,
+        artifact: u64,
+        target_root: u64,
+        target_relative: String,
+    },
     SanitizeName {
         request_id: u64,
         name: String,
@@ -18,6 +40,8 @@ pub(crate) enum Request {
         path: String,
         #[serde(default)]
         expected_identity: Option<String>,
+        #[serde(default)]
+        read_only: bool,
     },
     OpenArtifact {
         request_id: u64,
@@ -37,6 +61,27 @@ pub(crate) enum Request {
         artifact: u64,
         target_root: u64,
         target_relative: String,
+    },
+    ExfatVolumeIdentity {
+        request_id: u64,
+        root: u64,
+    },
+    ReserveExfatTarget {
+        request_id: u64,
+        artifact: u64,
+        target_root: u64,
+        target_relative: String,
+        #[serde(default)]
+        expected_identity: Option<String>,
+        #[serde(default)]
+        token: Option<String>,
+        #[serde(default)]
+        volume_id: Option<String>,
+    },
+    RenameOpenedReserved {
+        request_id: u64,
+        artifact: u64,
+        reservation: u64,
     },
     IsolateOpened {
         expected_root_identity: String,
@@ -85,11 +130,18 @@ impl Request {
     pub(crate) fn operation(&self) -> &'static str {
         match self {
             Self::Capabilities => "capabilities",
+            Self::CreatePrivateRoot { .. } => "create_private_root",
+            Self::RemovePrivateRoot { .. } => "remove_private_root",
+            Self::OpenSelectedFile { .. } => "open_selected_file",
+            Self::CopySelectedFile { .. } => "copy_selected_file",
             Self::SanitizeName { .. } => "sanitize_name",
             Self::OpenRoot { .. } => "open_root",
             Self::OpenArtifact { .. } => "open_artifact",
             Self::RenameOpenedNoReplace { .. } => "rename_opened_no_replace",
             Self::LinkOpenedNoReplace { .. } => "link_opened_no_replace",
+            Self::ExfatVolumeIdentity { .. } => "exfat_volume_identity",
+            Self::ReserveExfatTarget { .. } => "reserve_exfat_target",
+            Self::RenameOpenedReserved { .. } => "rename_opened_reserved",
             Self::IsolateOpened { .. } => "isolate_opened",
             Self::CopyOpened { .. } => "copy_opened",
             Self::RenameNoReplace { .. } => "rename_no_replace",
@@ -124,6 +176,14 @@ pub(crate) struct Response<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) held_artifacts: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) reserved_exfat_rename: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) token_exfat_reservation: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) volume_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) platform_file_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) operation: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) directory_sync_mode: Option<&'static str>,
@@ -153,6 +213,10 @@ impl<'a> Response<'a> {
             held_roots: None,
             directory_sync: None,
             held_artifacts: None,
+            reserved_exfat_rename: None,
+            token_exfat_reservation: None,
+            volume_id: None,
+            platform_file_id: None,
             operation: None,
             directory_sync_mode: None,
             os_error: None,
@@ -244,7 +308,7 @@ mod tests {
             "op": "remove_opened",
             "request_id": 7,
             "artifact": 11,
-            "quarantine_relative": ".nio-remove-7",
+            "quarantine_relative": ".niodownloader-remove-7",
             "resume_isolated": true
         }))
         .unwrap();

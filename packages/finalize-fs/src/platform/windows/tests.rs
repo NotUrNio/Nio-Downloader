@@ -49,7 +49,7 @@ fn rejects_ambiguous_windows_path_components() {
             "{component:?} must be rejected"
         );
     }
-    assert!(super::nt::wide_name("unicode_ñ.zip").is_ok());
+    assert!(super::nt::wide_name("资料.zip").is_ok());
 }
 
 #[test]
@@ -71,9 +71,9 @@ fn copies_and_removes_a_held_directory_without_following_paths() {
     sync_root(&root).expect("flush held root");
 
     let copied = open_artifact(&root, "private-target").expect("open copied artifact");
-    remove_opened(copied, ".nio-remove", false).expect("remove held copied tree");
+    remove_opened(copied, ".niodownloader-remove", false).expect("remove held copied tree");
     assert!(!scratch.path().join("private-target").exists());
-    assert!(!scratch.path().join(".nio-remove").exists());
+    assert!(!scratch.path().join(".niodownloader-remove").exists());
 }
 
 #[test]
@@ -84,10 +84,10 @@ fn removes_a_held_file_by_consuming_its_admitted_handle() {
     let root =
         open_root(scratch.path().to_str().expect("UTF-8 scratch path")).expect("open held root");
     let payload = open_artifact(&root, "payload.bin").expect("open payload artifact");
-    remove_opened(payload, ".nio-remove", false).expect("remove held payload");
+    remove_opened(payload, ".niodownloader-remove", false).expect("remove held payload");
 
     assert!(!scratch.path().join("payload.bin").exists());
-    assert!(!scratch.path().join(".nio-remove").exists());
+    assert!(!scratch.path().join(".niodownloader-remove").exists());
 }
 
 #[test]
@@ -188,13 +188,13 @@ fn smb_share_supports_held_rename_copy_and_removal() {
         Scratch(PathBuf::from(share).join(format!("finalize-{}-{nonce}", std::process::id())));
     fs::create_dir_all(scratch.path().join("tree/nested")).unwrap();
     fs::write(scratch.path().join("tree/nested/payload.bin"), b"payload").unwrap();
-    fs::write(scratch.path().join("source.nio"), b"complete").unwrap();
+    fs::write(scratch.path().join("source.niodownloader"), b"complete").unwrap();
     let root = open_root(scratch.path().to_str().unwrap()).unwrap();
-    let artifact = super::open_artifact_for_rename(&root, "source.nio").unwrap();
+    let artifact = super::open_artifact_for_rename(&root, "source.niodownloader").unwrap();
     assert!(
         fs::OpenOptions::new()
             .write(true)
-            .open(scratch.path().join("source.nio"))
+            .open(scratch.path().join("source.niodownloader"))
             .is_err(),
         "holding an SMB file must continue to exclude content writers"
     );
@@ -205,7 +205,7 @@ fn smb_share_supports_held_rename_copy_and_removal() {
         fs::read(scratch.path().join("complete.bin")).unwrap(),
         b"complete"
     );
-    assert!(!scratch.path().join("source.nio").exists());
+    assert!(!scratch.path().join("source.niodownloader").exists());
     let tree = open_artifact(&root, "tree").unwrap();
     assert!(rename_opened_no_replace(&tree, &root, "complete.bin").is_err());
     copy_opened(&tree, &root, "copied-tree").unwrap();
@@ -223,19 +223,19 @@ fn rename_admission_waits_for_a_reader_that_denies_delete_sharing() {
     use windows_sys::Win32::Storage::FileSystem::{FILE_SHARE_READ, FILE_SHARE_WRITE};
 
     let scratch = Scratch::new("rename-admission-retry");
-    fs::write(scratch.path().join("source.nio"), b"complete").unwrap();
+    fs::write(scratch.path().join("source.niodownloader"), b"complete").unwrap();
     let root = open_root(scratch.path().to_str().unwrap()).unwrap();
     let reader = fs::OpenOptions::new()
         .read(true)
         .share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE)
-        .open(scratch.path().join("source.nio"))
+        .open(scratch.path().join("source.niodownloader"))
         .unwrap();
     std::thread::scope(|scope| {
         scope.spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(120));
             drop(reader);
         });
-        let artifact = super::open_artifact_for_rename(&root, "source.nio").unwrap();
+        let artifact = super::open_artifact_for_rename(&root, "source.niodownloader").unwrap();
         let outcome = rename_opened_no_replace(&artifact, &root, "complete.bin").unwrap();
         assert_eq!(outcome.directory_sync_mode, "directory_flushed");
     });
@@ -243,5 +243,78 @@ fn rename_admission_waits_for_a_reader_that_denies_delete_sharing() {
         fs::read(scratch.path().join("complete.bin")).unwrap(),
         b"complete"
     );
-    assert!(!scratch.path().join("source.nio").exists());
+    assert!(!scratch.path().join("source.niodownloader").exists());
+}
+
+#[test]
+#[ignore = "requires NIODOWNLOADER_FINALIZE_EXFAT_ROOT on a disposable exFAT volume"]
+fn exfat_volume_root_and_nested_directory_support_no_replace_rename() {
+    use std::io::Write;
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Storage::FileSystem::GetVolumeInformationByHandleW;
+
+    let volume =
+        PathBuf::from(std::env::var("NIODOWNLOADER_FINALIZE_EXFAT_ROOT").expect("exFAT volume root"));
+    let (_, parts) = super::split_absolute_root(&volume).unwrap();
+    assert!(parts.is_empty(), "test must include the volume root itself");
+    let root = open_root(volume.to_str().unwrap()).expect("admit exFAT root without a file ID");
+    let mut filesystem = [0_u16; 32];
+    let result = unsafe {
+        GetVolumeInformationByHandleW(
+            root.handle.as_raw_handle(),
+            std::ptr::null_mut(),
+            0,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            filesystem.as_mut_ptr(),
+            filesystem.len() as u32,
+        )
+    };
+    assert_ne!(
+        result,
+        0,
+        "query exFAT volume: {}",
+        std::io::Error::last_os_error()
+    );
+    let end = filesystem.iter().position(|value| *value == 0).unwrap();
+    assert!(String::from_utf16_lossy(&filesystem[..end]).eq_ignore_ascii_case("exfat"));
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let prefix = format!("niodownloader-exfat-{}-{nonce}", std::process::id());
+    let scratch = Scratch(volume.join(&prefix));
+    fs::create_dir(scratch.path()).unwrap();
+    fs::create_dir(scratch.path().join("nested")).unwrap();
+    for directory in [volume, scratch.path().join("nested")] {
+        let root = open_root(directory.to_str().unwrap()).unwrap();
+        let source = format!("{prefix}.rar.niodownloader");
+        let target = format!("{prefix}.rar");
+        for (name, bytes) in [
+            (&source, b"download".as_slice()),
+            (&target, b"existing".as_slice()),
+        ] {
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(directory.join(name))
+                .unwrap();
+            file.write_all(bytes).unwrap();
+            file.sync_all().unwrap();
+        }
+        let artifact = super::open_artifact_for_rename(&root, &source).unwrap();
+        assert!(rename_opened_no_replace(&artifact, &root, &target).is_err());
+        assert_eq!(fs::read(directory.join(&target)).unwrap(), b"existing");
+        assert_eq!(fs::read(directory.join(&source)).unwrap(), b"download");
+        fs::remove_file(directory.join(&target)).unwrap();
+        let result = rename_opened_no_replace(&artifact, &root, &target).unwrap();
+        assert_eq!(result.directory_sync_mode, "directory_flushed");
+        sync_root(&root).unwrap();
+        drop(artifact);
+        assert!(!directory.join(&source).exists());
+        assert_eq!(fs::read(directory.join(&target)).unwrap(), b"download");
+        fs::remove_file(directory.join(target)).unwrap();
+    }
 }

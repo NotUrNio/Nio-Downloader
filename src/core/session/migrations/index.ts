@@ -1,3 +1,4 @@
+import { copyFileSync, existsSync } from 'node:fs'
 import type Database from 'better-sqlite3'
 import {
   ACTIVITY_SCHEMA_OBJECTS,
@@ -11,6 +12,8 @@ import { V4_SCHEMA_OBJECTS, v4 } from './v4'
 import { V5_TASK_SCHEMA_OBJECTS, v5 } from './v5'
 import { V6_SCHEMA_OBJECTS, v6 } from './v6'
 import { V7_SCHEMA_OBJECTS, v7 } from './v7'
+import { V8_SCHEMA_OBJECTS, v8 } from './v8'
+import { v9 } from './v9'
 
 interface Migration {
   version: number
@@ -26,8 +29,11 @@ interface Migration {
 // durable plugin finalize journals plus post-delivery and quota state. v5
 // persists the user-selected save directory independently of engine paths and
 // repairs stale instance statuses beneath terminal tasks. v6 adds independent
-// seeding-time counters without inventing pre-upgrade history.
-const MIGRATIONS: Migration[] = [v1, v2, v3, v4, v5, v6, v7]
+// seeding-time counters without inventing pre-upgrade history. v7 persists
+// task tracker state, v8 adds the legacy-import ledger, and v9 clears the
+// empty-string `task_instances.gid` rows that previously poisoned the global
+// UNIQUE(gid) index.
+const MIGRATIONS: Migration[] = [v1, v2, v3, v4, v5, v6, v7, v8, v9]
 
 const HIGHEST_KNOWN_VERSION = MIGRATIONS.reduce(
   (max, m) => (m.version > max ? m.version : max),
@@ -213,7 +219,10 @@ function hasExactCanonicalTaskSchema(
     return false
   }
 
-  const expectedNames = new Set(objects.map((object) => object.name))
+  const expectedNames = new Set([
+    ...objects.map((object) => object.name),
+    'legacy_import_delete_tombstone',
+  ])
   const explicitIndexesAndTriggers = db
     .prepare(
       `SELECT name
@@ -285,6 +294,9 @@ function validateCanonicalTaskAndActivitySchema(db: Database.Database): void {
 }
 
 function validateCanonicalSchema(db: Database.Database): void {
+  if (!hasExactSchemaObjects(db, V8_SCHEMA_OBJECTS)) {
+    throw new StaleSchemaError('task_tracker_schema_missing', db.name)
+  }
   if (
     !hasExactSchemaObjects(db, V7_SCHEMA_OBJECTS) ||
     !hasNoExplicitIndexesOrTriggers(db, ['task_tracker_state'])
@@ -503,6 +515,18 @@ export function migrate(db: Database.Database): void {
       !hasActivityMeta
     ) {
       throw new StaleSchemaError('activity_schema_missing', dbPath)
+    }
+  }
+
+  const needsMigration = MIGRATIONS.some((m) => m.version > current)
+  if (needsMigration && db.name && db.name !== ':memory:') {
+    try {
+      if (existsSync(db.name)) {
+        const backupPath = `${db.name}.bak-${Date.now()}`
+        copyFileSync(db.name, backupPath)
+      }
+    } catch {
+      // Best-effort database backup before migration runs
     }
   }
 

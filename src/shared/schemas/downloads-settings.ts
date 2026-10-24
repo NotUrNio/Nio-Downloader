@@ -18,6 +18,7 @@ export const downloadsSettingsSchema = z.object({
     defaultSaveDir: true,
     autofillClipboardLinks: true,
     fileDeletionMode: true,
+    speedLimitUnits: true,
   }),
   engine: engineSettingsInputSchema.pick({
     performanceProfile: true,
@@ -78,6 +79,10 @@ export const downloadsSettingsPatchSchema = z
     app: downloadsSettingsSchema.shape.app
       .partial()
       .extend({
+        speedLimitUnits: appSettingsInputSchema.shape.speedLimitUnits
+          .partial()
+          .strict()
+          .optional(),
         defaultSaveDir: z
           .string()
           .min(1)

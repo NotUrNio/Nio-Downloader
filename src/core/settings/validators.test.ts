@@ -143,7 +143,7 @@ describe('validateEngineSettings', () => {
   })
 
   it('uses the Nio Downloader default user agent', () => {
-    expect(DEFAULT_ENGINE_SETTINGS.userAgent).toBe('NioDownloader/1.0')
+    expect(DEFAULT_ENGINE_SETTINGS.userAgent).toBe('aria2/1.37.0')
   })
 
   it('rejects sessionSaveInterval below minimum 10', () => {

@@ -189,6 +189,16 @@ function validBeforeCreatePayload() {
 }
 
 describe('CapabilityBridge', () => {
+  it('security teardown preempts an ordinary disposal without sending guest cleanup', async () => {
+    const { bridge } = makeBridge()
+    const worker = bridge.getWorker()
+    const post = vi.spyOn(worker, 'postMessage')
+    const ordinary = bridge.dispose()
+    await bridge.dispose(true)
+    expect(worker.threadId).toBe(-1)
+    await ordinary
+    expect(post).not.toHaveBeenCalledWith({ type: 'event', event: 'shutdown' })
+  })
   it('routes a worker log call to the LogCapabilityHost', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'mbr-'))
     const workerPath = writeStubWorker(dir)
@@ -266,13 +276,19 @@ describe('CapabilityBridge', () => {
     await bridge.dispose()
   })
 
-  it('prepareBundle rewrites nio:plugin-api imports', async () => {
+  it('prepareBundle rewrites motrix:plugin-api and nio:plugin-api imports', async () => {
     const { prepareBundle } = await import('./capability-bridge')
-    const out = prepareBundle(
+    const outMotrix = prepareBundle(
+      `import { log, hooks } from 'motrix:plugin-api'\nlog.info('hi')`
+    )
+    expect(outMotrix).toContain('globalThis.__nio_plugin_api__')
+    expect(outMotrix).not.toContain("from 'motrix:plugin-api'")
+
+    const outNio = prepareBundle(
       `import { log, hooks } from 'nio:plugin-api'\nlog.info('hi')`
     )
-    expect(out).toContain('globalThis.__nio_plugin_api__')
-    expect(out).not.toContain("from 'nio:plugin-api'")
+    expect(outNio).toContain('globalThis.__nio_plugin_api__')
+    expect(outNio).not.toContain("from 'nio:plugin-api'")
   })
 
   it('prepareBundle converts `import { x as y }` renames into destructuring `x: y`', async () => {
@@ -281,7 +297,7 @@ describe('CapabilityBridge', () => {
     // identifiers; without the rename->`:` conversion the resulting
     // `const { config as d } = …` is a QuickJS SyntaxError.
     const out = prepareBundle(
-      `import{config as d,ffmpeg as g,hooks as S,http as b,log as u,notify as E}from"nio:plugin-api";d.get('x')`
+      `import{config as d,ffmpeg as g,hooks as S,http as b,log as u,notify as E}from"motrix:plugin-api";d.get('x')`
     )
     expect(out).toContain('globalThis.__nio_plugin_api__')
     expect(out).toContain('config: d')
@@ -292,7 +308,7 @@ describe('CapabilityBridge', () => {
   it('prepareBundle handles a mix of plain and renamed members', async () => {
     const { prepareBundle } = await import('./capability-bridge')
     const out = prepareBundle(
-      `import { log, hooks as h } from 'nio:plugin-api';\nlog.info('x')`
+      `import { log, hooks as h } from 'motrix:plugin-api';\nlog.info('x')`
     )
     expect(out).toContain('{ log, hooks: h }')
   })

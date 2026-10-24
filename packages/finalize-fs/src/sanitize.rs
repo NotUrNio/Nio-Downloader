@@ -137,7 +137,7 @@ mod tests {
     fn sanitizes_the_cross_platform_filename_matrix() {
         let cases: &[(&str, &str)] = &[
             ("normal.zip", "normal.zip"),
-            ("archivo.tar.gz", "archivo.tar.gz"),
+            ("资料.tar.gz", "资料.tar.gz"),
             ("movie🎬.mp4", "movie🎬.mp4"),
             ("file<name>.mp4", "file_name_.mp4"),
             ("a:b.txt", "a_b.txt"),
@@ -190,14 +190,14 @@ mod tests {
         assert_eq!(clamped.len(), MAX_COMPONENT_BYTES);
         assert!(clamped.chars().all(|character| character == 'a'));
 
-        let named = format!("{}.zip", "€".repeat(100));
+        let named = format!("{}.zip", "字".repeat(100));
         let clamped = sanitize_filename(&named);
         assert!(clamped.len() <= MAX_COMPONENT_BYTES, "{}", clamped.len());
         assert!(clamped.ends_with(".zip"), "{clamped}");
-        assert!(clamped.trim_end_matches('€').ends_with(".zip"));
-        // 83 3-byte UTF-8 characters (249 bytes) + ".zip" fits in 254 bytes; the
+        assert!(clamped.trim_end_matches('字').ends_with(".zip"));
+        // 83 CJK characters (249 bytes) + ".zip" fits in 254 bytes; the
         // 84th character would exceed the budget.
-        assert_eq!(clamped, format!("{}.zip", "€".repeat(83)));
+        assert_eq!(clamped, format!("{}.zip", "字".repeat(83)));
 
         // A giant "extension" is payload: clamp the whole name instead.
         let giant_extension = format!("{}.{}", "d".repeat(300), "x".repeat(200));

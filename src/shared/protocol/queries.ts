@@ -1,4 +1,5 @@
 export const Queries = {
+  GetRendererSession: 'query:getRendererSession',
   GetCompletionShutdown: 'query:getCompletionShutdown',
   GetDownloadsSettingsDraft: 'query:getDownloadsSettingsDraft',
   GetDisclaimerState: 'query:getDisclaimerState',
@@ -11,6 +12,7 @@ export const Queries = {
   GetDirectoryPreferences: 'query:getDirectoryPreferences',
   ListServerDirectoryLocations: 'query:listServerDirectoryLocations',
   GetSettings: 'query:getSettings',
+  GetSettingsFileLocation: 'query:getSettingsFileLocation',
   GetSystemAccentColor: 'query:getSystemAccentColor',
   GetUpdateState: 'query:getUpdateState',
   GetSystemProxy: 'query:getSystemProxy',
@@ -28,9 +30,11 @@ export const Queries = {
   ListPluginGrants: 'query:listPluginGrants',
   GetPluginCommandGraph: 'query:getPluginCommandGraph',
   GetPluginLogs: 'query:getPluginLogs',
+  GetPluginLogState: 'query:getPluginLogState',
   // Remote plugin registry (dl.niodownloader.com) — read-side directory queries.
   // Entries come back annotated with a `compatible` host-version flag.
   ListRegistryPlugins: 'query:listRegistryPlugins',
+  GetRegistryStatus: 'query:getRegistryStatus',
   GetRegistryPlugin: 'query:getRegistryPlugin',
   // Spec §10 L2877 — aggregate snapshot of all enabled plugins'
   // contributions (commands, hooks, configurations). Drives the renderer's
@@ -62,6 +66,7 @@ export const Queries = {
   // Save directory allowlist (web degradation, electron returns unrestricted)
   ListAllowedSaveDirs: 'query:listAllowedSaveDirs',
   ListServerDirectories: 'query:listServerDirectories',
+  ValidateServerFile: 'query:validateServerFile',
   ValidateServerDirectory: 'query:validateServerDirectory',
   // GeoIP
   GetGeoIPStatus: 'query:getGeoIPStatus',
@@ -88,6 +93,7 @@ export const Queries = {
   GetLinuxDefaultAssociations: 'query:getLinuxDefaultAssociations',
   GetWindowsDefaultAssociations: 'query:getWindowsDefaultAssociations',
   GetApplicationMenu: 'query:getApplicationMenu',
+  CheckTaskFileExists: 'query:checkTaskFileExists',
 } as const
 
 export type QueryChannel = (typeof Queries)[keyof typeof Queries]

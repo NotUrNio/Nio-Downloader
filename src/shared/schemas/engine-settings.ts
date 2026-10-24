@@ -51,7 +51,7 @@ const persistedEngineSettingsSchema = z.object({
     .catch(AUTO_PERFORMANCE.minSplitSize),
 
   // Network reliability (HOT)
-  userAgent: controlFreeString().catch('NioDownloader/1.0'),
+  userAgent: controlFreeString().catch('aria2/1.37.0'),
   connectTimeout: z.number().int().min(1).max(600).catch(30),
   socketTimeout: z.number().int().min(1).max(600).catch(30),
   maxTries: z.number().int().min(0).max(100).catch(5),

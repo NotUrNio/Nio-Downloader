@@ -118,6 +118,11 @@ export function canReseed(t: DownloadTask): boolean {
   )
 }
 
+/** Completed regular downloads can be downloaded again. */
+export function canRedownload(t: DownloadTask): boolean {
+  return !isMediaKind(t.kind) && t.status === TaskStatus.Completed
+}
+
 export function canRetry(t: DownloadTask): boolean {
   return t.status === TaskStatus.Error || t.status === TaskStatus.Removed
 }

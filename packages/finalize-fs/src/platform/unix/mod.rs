@@ -1,4 +1,8 @@
 //! Unix handle ownership and descriptor-relative artifact admission.
+mod operations;
+pub(crate) use operations::{
+    copy_selected_file, create_private_root, open_selected_file, remove_private_root, root_identity,
+};
 
 mod copy;
 mod digest;
@@ -13,7 +17,12 @@ mod tests;
 use crate::path::validate_relative;
 use digest::hash_opened_file;
 use metadata::artifact_stamp;
+
+#[cfg(target_os = "macos")]
+mod reserved;
 use remove::snapshot_directory;
+#[cfg(target_os = "macos")]
+pub(crate) use reserved::{exfat_volume_identity, rename_opened_reserved, reserve_exfat_target};
 use std::ffi::CString;
 use std::io;
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd};
@@ -36,6 +45,8 @@ pub(crate) struct ArtifactHandle {
     opened_link_count: libc::nlink_t,
     opened_tree: Option<Vec<TreeEntrySnapshot>>,
     opened_file_sha256: Option<[u8; 32]>,
+    #[cfg(target_os = "macos")]
+    reservation_digest: Option<[u8; 32]>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -162,7 +173,7 @@ fn open_artifact_internal(
         libc::openat(
             parent.as_raw_fd(),
             name.as_ptr(),
-            libc::O_RDONLY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+            libc::O_RDONLY | libc::O_NOFOLLOW | libc::O_CLOEXEC | libc::O_NONBLOCK,
         )
     };
     if fd < 0 {
@@ -207,6 +218,8 @@ fn open_artifact_internal(
         opened_link_count: opened_stat.st_nlink,
         opened_tree,
         opened_file_sha256,
+        #[cfg(target_os = "macos")]
+        reservation_digest: None,
     })
 }
 
@@ -231,8 +244,13 @@ fn assert_opened_artifact(
 }
 
 pub(crate) fn sync_root(root: &RootHandle) -> io::Result<()> {
-    if unsafe { libc::fsync(root.0.as_raw_fd()) } < 0 {
-        return Err(io::Error::last_os_error());
+    #[cfg(target_os = "macos")]
+    return reserved::sync_full(&root.0);
+    #[cfg(not(target_os = "macos"))]
+    {
+        if unsafe { libc::fsync(root.0.as_raw_fd()) } < 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
     }
-    Ok(())
 }

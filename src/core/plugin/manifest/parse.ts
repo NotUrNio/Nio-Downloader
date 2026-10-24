@@ -8,7 +8,12 @@ import {
   type ManifestZodOutput,
 } from './schema'
 
-const KNOWN_CONTRIBUTES_KEYS = ['commands', 'hooks', 'configuration'] as const
+const KNOWN_CONTRIBUTES_KEYS = [
+  'commands',
+  'hooks',
+  'configuration',
+  'operations',
+] as const
 const TYPO_DISTANCE_THRESHOLD = 2
 
 // Spec §2 L331-345 — Phase 1A activation event vocabulary. Unknown tokens
@@ -35,6 +40,8 @@ export interface ParseManifestOptions {
   // publishers (nio.*); community plugins discovered or installed at
   // runtime always default to 'community'.
   origin?: 'community' | 'builtin'
+  /** Host-only result of checking the package against pinned official keys. */
+  official?: boolean
 }
 
 export interface ManifestWarning {
@@ -216,12 +223,20 @@ export function parseManifest(
 
   // Step 3: Enforce reserved-publisher invariant. Community plugins must not
   // claim a reserved publisher (nio.*, verified.*, official.*, system.*).
-  // Built-ins shipped inside the app bundle are exempt — they originate from
-  // <resourcesDir>/builtin-plugins/ and the registry passes origin='builtin'.
+  // Official optional packages earn only the nio.* (or motrix.*) namespace through
+  // signature verification. Bundled builtins keep their separate origin gate.
   const origin = opts.origin ?? 'community'
   const isReserved =
     result.data.id.startsWith('nio.') || isReservedPublisher(result.data.id)
-  if (origin !== 'builtin' && isReserved) {
+  if (
+    origin !== 'builtin' &&
+    isReserved &&
+    !(
+      opts.official &&
+      (result.data.id.startsWith('nio.') ||
+        result.data.id.startsWith('motrix.'))
+    )
+  ) {
     throw new PluginManifestInvalid(
       'plugin.manifest.id_reserved_publisher',
       `publisher name is reserved: "${result.data.id}"`,
@@ -301,6 +316,13 @@ export function parseManifest(
       if (!entry) continue
       const role = entry.role as HookRole
       if (role === 'pre-resolve' && origin !== 'builtin') {
+        if (opts.official) {
+          throw new PluginManifestInvalid(
+            'plugin.install.official_builtin_hook',
+            'plugin.install.official_builtin_hook',
+            { hook: hookName, role, origin }
+          )
+        }
         throw new PluginManifestInvalid(
           'plugin.manifest.role.requires_builtin',
           `contributes.hooks.${hookName}.role "pre-resolve" is reserved for built-in plugins`,

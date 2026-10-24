@@ -1984,7 +1984,9 @@ function synthesizePrimaryInstance(
   return {
     instanceId: `synth:${task.id}`,
     niodownloaderId: task.id,
-    gid: task.engineTaskId,
+    // task.engineTaskId defaults to '' (see makeDownloadTask); an empty engine
+    // gid must persist as NULL, not '' — see NioDownloaderDatabase.serializeInstance.
+    gid: task.engineTaskId || null,
     phase: isBtLike
       ? TaskInstancePhase.BtDownload
       : TaskInstancePhase.HttpDownload,
