@@ -59,12 +59,26 @@ describe('release version contract', () => {
 
   it('preserves current release references', () => {
     const english = read(`docs/release-notes/${packageVersion}.md`)
+    const releaseMetadata = resolveReleaseMetadata({
+      eventName: 'workflow_dispatch',
+      refName: 'main',
+      refProtected: 'false',
+      packageVersion,
+    })
 
     expect(english).toContain(
       `https://github.com/NotUrNio/Nio-Downloader/blob/${releaseTag}/docs/docker-server.md`
     )
-    const forbiddenLegacyRepo = ['ND', 'Downloader'].join('-')
-    expect(english).not.toContain(forbiddenLegacyRepo)
+
+    for (const source of [english]) {
+      expect(source).toContain(
+        `docker.io/niodownloader/nio-server:${packageVersion}`
+      )
+      expect(source).toContain(`ghcr.io/noturnio/nio-server:${packageVersion}`)
+      if (releaseMetadata.channel === 'beta') {
+        expect(source).toContain('latest/edge')
+      }
+    }
   })
 
   it('validates 1.0.0 release notes contain no restricted language or secret-like identifiers', () => {

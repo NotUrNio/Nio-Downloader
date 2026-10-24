@@ -60,7 +60,11 @@ require(${JSON.stringify(join(repo, 'dist/main/index.cjs'))});
       args: [fixtureApp],
       cwd: userDataDir,
       env: {
-        ...process.env,
+        ...Object.fromEntries(
+          Object.entries(process.env).filter(
+            ([k]) => k !== 'ELECTRON_RUN_AS_NODE'
+          )
+        ),
         NODE_ENV: 'test',
         NIODOWNLOADER_USER_DATA: userDataDir,
         NIODOWNLOADER_RPC_PORT: String(rpcPort),

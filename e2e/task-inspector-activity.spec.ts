@@ -221,7 +221,8 @@ async function launchSeededApp(
 
 async function openActivityForTask(
   page: Page,
-  taskName: string
+  taskName: string,
+  lifetime = false
 ): Promise<void> {
   if (!page.url().includes('#/downloads')) {
     await page.locator('a[href="#/downloads"]').click()
@@ -255,6 +256,12 @@ async function openActivityForTask(
   await expect(tabs.last()).toBeVisible()
   await tabs.last().click()
   await expect(page.getByTestId('task-inspector-activity-root')).toBeVisible()
+  if (lifetime) {
+    const radio = page.getByRole('radio', { name: /Lifetime/i })
+    if (await radio.isVisible().catch(() => false)) {
+      await radio.click()
+    }
+  }
 }
 
 async function capture(page: Page, name: string): Promise<void> {
@@ -558,6 +565,25 @@ test.describe('Task Inspector Activity', () => {
       for (const key of ['Home', 'ArrowUp', 'End']) {
         await handle.focus()
         await handle.press(key)
+        await expect
+          .poll(() =>
+            drawer.evaluate((element) => {
+              const style = getComputedStyle(element)
+              const offset =
+                Number.parseFloat(
+                  style.getPropertyValue('--drawer-snap-point-offset')
+                ) || 0
+              return (
+                !element.hasAttribute('data-starting-style') &&
+                !element
+                  .getAnimations()
+                  .some((animation) => animation.playState === 'running') &&
+                Math.abs(new DOMMatrixReadOnly(style.transform).m42 - offset) <
+                  0.5
+              )
+            })
+          )
+          .toBe(true)
         await content.hover()
         await page.mouse.wheel(0, 10_000)
         await expect
@@ -637,9 +663,9 @@ test.describe('Task Inspector Activity', () => {
       await lifetime.focus()
       await lifetime.press('Home')
       await expect(
-        group.getByRole('radio', { name: /Session/i })
+        group.getByRole('radio', { name: /Last 60s/i })
       ).toHaveAttribute('aria-checked', 'true')
-      await group.getByRole('radio', { name: /Session/i }).press('End')
+      await group.getByRole('radio', { name: /Last 60s/i }).press('End')
       await expect(
         group.getByRole('radio', { name: /Lifetime/i })
       ).toHaveAttribute('aria-checked', 'true')
@@ -734,29 +760,44 @@ test.describe('Task Inspector Activity', () => {
       ).toBeVisible()
       await capture(page, 'error-en-US-light-914.png')
 
-      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.zero)
+      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.zero, true)
       await expect(page.getByText('No network traffic right now')).toBeVisible()
       await capture(page, 'all-zero-en-US-light-914.png')
 
-      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.empty)
+      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.empty, true)
       await expect(
         page.getByText('Lifetime history is not available yet')
       ).toBeVisible()
 
-      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.single)
+      await openActivityForTask(
+        page,
+        TASK_INSPECTOR_ACTIVITY_NAMES.single,
+        true
+      )
+      await expect(
+        page.getByText('Adaptive resolution · 1 sample', { exact: true })
+      ).toBeVisible()
       await expect(
         page
           .getByTestId('task-inspector-activity-transfer-card')
-          .locator('.activity-transfer-bar .recharts-rectangle')
-      ).toHaveCount(2)
+          .getByRole('img', { name: /1 sample\b/ })
+      ).toBeVisible()
 
-      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.compacted)
+      await openActivityForTask(
+        page,
+        TASK_INSPECTOR_ACTIVITY_NAMES.compacted,
+        true
+      )
       await expect(
         page.getByText(/Adaptive resolution.*samples/i)
       ).toBeVisible()
       await capture(page, 'completed-en-US-light-914.png')
 
-      await openActivityForTask(page, TASK_INSPECTOR_ACTIVITY_NAMES.truncated)
+      await openActivityForTask(
+        page,
+        TASK_INSPECTOR_ACTIVITY_NAMES.truncated,
+        true
+      )
       await expect(
         page.getByRole('img', {
           name: /Earlier history truncated.*\d+\s+event/i,
@@ -832,7 +873,7 @@ test.describe('Task Inspector Activity', () => {
         page.getByText(/Lifetime activity is unavailable/i)
       ).toBeVisible()
       await expect(
-        page.getByRole('radio', { name: /Session/i })
+        page.getByRole('radio', { name: /Last 60s/i })
       ).toHaveAttribute('aria-checked', 'true')
       await expect(
         page.getByRole('radio', { name: /Lifetime/i })

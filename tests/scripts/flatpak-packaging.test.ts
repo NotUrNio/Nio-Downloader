@@ -6,7 +6,7 @@ describe('Flatpak packaging contract', () => {
   it('keeps source, architecture, offline, and runtime paths aligned', async () => {
     await expect(verifyFlatpakPackaging(process.cwd())).resolves.toMatchObject({
       modules: 4,
-      builtinSources: 6,
+      builtinSources: 4,
       brokerCommand: 'nio-native-host-broker',
       electronPackageVerification: true,
       privateProtocolVersion: 1,

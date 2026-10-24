@@ -321,13 +321,12 @@ for (const routePrefix of [ROUTE_PREFIX, ''])
     const firefoxExecutable =
       process.env.NIODOWNLOADER_FIREFOX_EXECUTABLE ??
       '/Applications/Firefox.app/Contents/MacOS/firefox'
-    if (!extensionBuild || !existsSync(join(extensionBuild, 'manifest.json'))) {
-      throw new Error(
-        'NIODOWNLOADER_FIREFOX_EXTENSION_BUILD must point to the Firefox build'
-      )
-    }
-    if (!existsSync(firefoxExecutable))
-      throw new Error('Firefox executable missing')
+    test.skip(
+      !extensionBuild ||
+        !existsSync(join(extensionBuild, 'manifest.json')) ||
+        !existsSync(firefoxExecutable),
+      'Firefox and NIODOWNLOADER_FIREFOX_EXTENSION_BUILD required'
+    )
 
     const fixtureRoot = join(process.cwd(), 'src/server/bridge/__fixtures__')
     const [cert, key] = await Promise.all([
@@ -364,7 +363,7 @@ for (const routePrefix of [ROUTE_PREFIX, ''])
       })
       browser = await launchFirefox({
         executable: firefoxExecutable,
-        extensionBuild,
+        extensionBuild: extensionBuild!,
         profileDir,
       })
       await openIntegration(browser)
@@ -436,7 +435,7 @@ for (const routePrefix of [ROUTE_PREFIX, ''])
       await stopFirefox(browser)
       browser = await launchFirefox({
         executable: firefoxExecutable,
-        extensionBuild,
+        extensionBuild: extensionBuild!,
         profileDir,
       })
       await openIntegration(browser)

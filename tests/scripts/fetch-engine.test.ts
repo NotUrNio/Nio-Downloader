@@ -17,6 +17,7 @@ import {
   resolveExtractCommand,
   resolveHostKey,
   run,
+  runWriteLock,
   selectKeys,
   sha256Hex,
   verifyDigest,
@@ -25,12 +26,13 @@ import {
 // A trimmed lockfile shaped exactly like scripts/engine.lock.json but with
 // obviously-fake digests — these tests only exercise selection/parse logic.
 const LOCK = {
-  repo: 'motrixapp/aria2',
-  tag: 'v1.37.0-niodownloader.1',
-  version: '1.37.0-niodownloader.1',
+  repo: 'NotUrNio/Nio-Downloader',
+  tag: 'v1.0.1',
+  version: '1.37.0-motrix.19',
   assets: {
     'darwin-arm64': { file: 'a-darwin-arm64.tar.gz', bin: 'aria2c' },
     'darwin-x64': { file: 'a-darwin-x64.tar.gz', bin: 'aria2c' },
+    'win32-arm64': { file: 'a-win32-arm64.zip', bin: 'aria2c.exe' },
     'win32-x64': { file: 'a-win32-x64.zip', bin: 'aria2c.exe' },
     'win32-ia32': { file: 'a-win32-ia32.zip', bin: 'aria2c.exe' },
     'linux-x64': { file: 'a-linux-x64.tar.gz', bin: 'aria2c' },
@@ -187,10 +189,10 @@ describe('selectKeys', () => {
     expect(() =>
       selectKeys(
         LOCK,
-        parseArgs(['--platform', 'win32', '--arch', 'arm64']),
+        parseArgs(['--platform', 'win32', '--arch', 'ia64']),
         host
       )
-    ).toThrow(/win32-arm64/)
+    ).toThrow(/win32-ia64/)
   })
 
   it('throws when a requested platform has no assets', () => {
@@ -458,6 +460,40 @@ describe('run', () => {
     expect(s.downloads).toHaveLength(0)
   })
 
+  it('fails closed when Windows ARM64 is missing from the engine lock', async () => {
+    const s = makeStub({
+      host: { platform: 'win32', arch: 'arm64' },
+      lock: makeLock(['win32-x64']),
+    })
+    expect(await run([], s.deps)).toBe(EXIT_FAILURE)
+    expect(s.errors.join('\n')).toContain(
+      'supported desktop target win32-arm64 is missing from the lockfile'
+    )
+    expect(await run(['--platform', 'win32', '--arch', 'arm64'], s.deps)).toBe(
+      EXIT_USAGE
+    )
+    expect(s.downloads).toHaveLength(0)
+  })
+
+  it('installs the pinned Windows ARM64 binary without an x64 fallback', async () => {
+    const s = makeStub({
+      host: { platform: 'win32', arch: 'arm64' },
+      lock: makeLock(['win32-x64', 'win32-arm64']),
+      archive: ARCHIVE,
+      binary: BINARY,
+    })
+    expect(await run([], s.deps)).toBe(EXIT_OK)
+    expect(s.downloads).toEqual([
+      'https://github.com/motrixapp/aria2/releases/download/v1/aria2c-1-win32-arm64.zip',
+    ])
+    expect(
+      s.files.get(path.join('/extra', 'win32', 'arm64', 'aria2c.exe'))
+    ).toEqual(BINARY)
+    expect(s.files.has(path.join('/extra', 'win32', 'x64', 'aria2c.exe'))).toBe(
+      false
+    )
+  })
+
   it('--all installs every lockfile key', async () => {
     const s = makeStub({
       lock: makeLock(['darwin-arm64', 'linux-x64', 'win32-x64']),
@@ -690,4 +726,57 @@ describe('fetchWithRetry', () => {
     expect(buf.toString()).toBe('LATE')
     expect(calls).toBe(2)
   })
+})
+
+describe('runWriteLock', () => {
+  const version = '1.37.0.19'
+  const files = [
+    `aria2-engine-${version}-darwin-arm64.tar.gz`,
+    `aria2-engine-${version}-darwin-x64.tar.gz`,
+    `aria2-engine-${version}-win32-arm64.zip`,
+    `aria2-engine-${version}-win32-x64.zip`,
+    `aria2-engine-${version}-win32-ia32.zip`,
+    `aria2-engine-${version}-linux-x64.tar.gz`,
+    `aria2-engine-${version}-linux-arm64.tar.gz`,
+    `aria2-engine-${version}-linux-armv7l.tar.gz`,
+  ]
+
+  it.each([true, false])(
+    'requires a verified Windows ARM64 archive before writing (present=%s)',
+    async (includeArm64) => {
+      const archive = Buffer.from('verified archive')
+      const binary = Buffer.from('verified binary')
+      const stub = makeStub({ archive, binary })
+      const sums = files
+        .filter((file) => includeArm64 || !file.endsWith('win32-arm64.zip'))
+        .map((file) => `${sha256Hex(archive)}  ${file}`)
+        .join('\n')
+      const writes: Array<{ assets: Record<string, unknown> }> = []
+      const deps = {
+        ...stub.deps,
+        download: async (url: string) =>
+          url.endsWith('/SHA256SUMS') ? Buffer.from(sums) : archive,
+        writeLockFile: async (lock: { assets: Record<string, unknown> }) => {
+          writes.push(lock)
+        },
+      }
+      const result = await runWriteLock({ tag: `v${version}` }, null, deps)
+      expect(result).toBe(includeArm64 ? EXIT_OK : EXIT_FAILURE)
+      if (includeArm64) {
+        expect(writes).toHaveLength(1)
+        expect(Object.keys(writes[0].assets)).toHaveLength(8)
+        expect(writes[0].assets['win32-arm64']).toEqual({
+          file: `aria2-engine-${version}-win32-arm64.zip`,
+          bin: 'aria2c.exe',
+          archiveSha256: sha256Hex(archive),
+          binarySha256: sha256Hex(binary),
+        })
+      } else {
+        expect(writes).toEqual([])
+        expect(stub.errors.join('\n')).toContain(
+          `SHA256SUMS is missing aria2-engine-${version}-win32-arm64.zip`
+        )
+      }
+    }
+  )
 })

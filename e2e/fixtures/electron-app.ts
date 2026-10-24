@@ -209,6 +209,7 @@ export async function launchNio(
     JSON.stringify({
       version: CURRENT_SETTINGS_VERSION,
       tracker: { autoSync: false },
+      app: { warnBeforeQuit: false },
       onboarding: {
         disclaimerAccepted: opts.disclaimerAccepted ?? true,
       },

@@ -297,10 +297,13 @@ test('default columns keep the download speed fully visible at minimum window si
     }),
   ])
   const list = mainWindow.getByTestId('virtual-list-container')
-  const header = list.getByRole('columnheader').nth(4)
-  const speed = list.locator('[data-task-id]').getByRole('gridcell').nth(4)
+  const header = list.getByRole('columnheader', { name: /Download speed/ })
+  const speed = list.getByRole('gridcell', { name: '999.9 MB/s', exact: true })
   await expect(speed).toHaveText('999.9 MB/s')
   await header.getByRole('button').click()
+  await list.evaluate((element) => {
+    element.scrollLeft = 0
+  })
   await expect(header).toHaveAttribute('aria-sort', 'descending')
 
   const expectSpeedFits = async () => {
@@ -317,9 +320,11 @@ test('default columns keep the download speed fully visible at minimum window si
           const text = range.getBoundingClientRect()
           return (
             rect.left >= bounds.left &&
-            rect.right <= bounds.right - 8 &&
+            rect.right <= bounds.right &&
             text.left >= rect.left + 8 &&
-            text.right <= rect.right - 8 &&
+            // Cell padding also keeps the text clear of the scrollbar when
+            // the speed column ends at the viewport edge.
+            text.right <= Math.min(rect.right, bounds.right) - 8 &&
             viewport.scrollLeft === 0
           )
         })
@@ -556,7 +561,7 @@ test('remembers a manual sort across app restarts and clears it when restoring t
       target.y + target.height / 2
     )
     await page.mouse.up()
-    await expect(list.getByRole('columnheader').first()).toContainText('Size')
+    await expect(list.getByRole('columnheader').nth(1)).toContainText('Size')
     const nameResize = list.getByRole('separator', {
       name: 'Resize Name column',
     })
@@ -576,7 +581,7 @@ test('remembers a manual sort across app restarts and clears it when restoring t
 
     app = await launchNio({ userDataDir, rpcPort })
     list = await openDownloads()
-    await expect(list.getByRole('columnheader').first()).toContainText('Size')
+    await expect(list.getByRole('columnheader').nth(1)).toContainText('Size')
     await expect(
       list.getByRole('separator', { name: 'Resize Name column' })
     ).toHaveAttribute('aria-valuenow', '216')
@@ -944,6 +949,7 @@ test('opens details by double click and keeps selection separate from inspector 
   ).toBeVisible()
   await rows.nth(0).dblclick()
   await expect(drawer).toBeVisible()
+  await expectDrawerSettled(drawer)
   await expect(handle).toHaveAttribute(
     'aria-valuenow',
     String(Math.round(viewportHeight * 0.75))
@@ -970,6 +976,7 @@ test('opens details by double click and keeps selection separate from inspector 
   })
   await rows.nth(0).dblclick()
   await expect(drawer).toBeVisible()
+  await expectDrawerSettled(drawer)
   await expect(handle).toHaveAttribute(
     'aria-valuenow',
     String(Math.round(viewportHeight * 0.75))
@@ -1094,6 +1101,15 @@ test('marquee selection survives row feedback, data updates and blank-space drag
   await viewport.evaluate((element) => {
     element.scrollTop = 0
   })
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollTop))
+    .toBe(0)
+  await mainWindow.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  )
   const selectionAtTop = () =>
     grid
       .locator('[data-task-id][aria-selected="true"]')
@@ -1333,6 +1349,10 @@ test('native list controls preserve selection through context menus, column chan
   await expect(mainWindow.getByRole('menu')).toHaveCount(0)
 
   await grid.getByRole('button', { name: 'Name', exact: true }).focus()
+  await mainWindow.keyboard.press('Shift+Tab')
+  await expect(
+    grid.getByRole('checkbox', { name: 'Select All Tasks' })
+  ).toBeFocused()
   await mainWindow.keyboard.press('Shift+Tab')
   await expect(grid).toBeFocused()
   await expect(grid).toHaveAttribute('data-keyboard-focus', 'true')
@@ -1944,7 +1964,8 @@ test('context actions open files, select download files, reorder the queue and c
   await row('menu-bt').click({ button: 'right' })
   await mainWindow
     .getByRole('menuitem', { name: 'Download order', exact: true })
-    .hover()
+    .focus()
+  await mainWindow.keyboard.press('ArrowRight')
   await expect(
     mainWindow.getByRole('menuitem', { name: 'Move to Front', exact: true })
   ).toBeVisible()

@@ -70,11 +70,18 @@ for (const platform of ['win32', 'linux', 'darwin']) {
             exact: true,
           })
           await other.hover()
-          const hoverBackground = await other
-            .locator('[data-sidebar="menu-button"]')
-            .evaluate((element) => getComputedStyle(element).backgroundColor)
+          let hoverBackground = ''
+          await expect
+            .poll(async () => {
+              hoverBackground = await other
+                .locator('[data-sidebar="menu-button"]')
+                .evaluate(
+                  (element) => getComputedStyle(element).backgroundColor
+                )
+              return Number(hoverBackground.match(/[\d.]+/g)?.[3] ?? 0)
+            })
+            .toBeGreaterThan(0)
           const hoverAlpha = Number(hoverBackground.match(/[\d.]+/g)?.[3])
-          expect(hoverAlpha).toBeGreaterThan(0)
           expect(hoverAlpha).toBeLessThan(alpha)
         }
 

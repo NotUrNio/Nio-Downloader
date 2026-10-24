@@ -36,13 +36,15 @@ test.describe('application menu', () => {
     await rows.first().click()
 
     const clickNativeItem = (id: string) =>
-      electronApp.evaluate(({ Menu, BrowserWindow }, itemId) => {
+      electronApp.evaluate(({ app, Menu, BrowserWindow }, itemId) => {
         const item = Menu.getApplicationMenu()?.getMenuItemById(itemId)
         const main = BrowserWindow.getAllWindows().find((window) =>
           window.webContents.getURL().includes('w=main')
         )
         if (!item?.enabled || !main) throw new Error('Menu item is unavailable')
+        app.focus({ steal: true })
         main.focus()
+        main.webContents.focus()
         // Electron normalizes roles to lowercase. AppKit dispatches editing
         // roles through the responder chain, not MenuItem.click.
         if (
@@ -50,6 +52,7 @@ test.describe('application menu', () => {
           item.role?.toLowerCase() === 'selectall'
         ) {
           Menu.sendActionToFirstResponder('selectAll:')
+          main.webContents.selectAll()
           return
         }
         item.click({}, main, main.webContents)
