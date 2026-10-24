@@ -273,6 +273,47 @@ describe('assembleReleaseArtifacts', () => {
     })
   })
 
+  it('synthesizes missing beta updater manifests from stable channel manifests during stable release assembly', async () => {
+    const fixture = await createFixture()
+    for (const target of [
+      'darwin-arm64',
+      'darwin-x64',
+      'linux-x64',
+      'linux-arm64',
+      'win32-x64',
+    ]) {
+      const directory = path.join(
+        fixture.input,
+        `release-input-${target}`,
+        'release'
+      )
+      for (const name of await readdir(directory)) {
+        if (name.startsWith('beta') && name.endsWith('.yml')) {
+          await unlink(path.join(directory, name))
+        }
+      }
+    }
+
+    const result = await assembleReleaseArtifacts({
+      inputDirectory: fixture.input,
+      outputDirectory: fixture.output,
+      version: VERSION,
+    })
+
+    expect(result.manifests.sort()).toEqual(
+      [
+        'beta.yml',
+        'beta-mac.yml',
+        'beta-linux.yml',
+        'beta-linux-arm64.yml',
+        'latest.yml',
+        'latest-mac.yml',
+        'latest-linux.yml',
+        'latest-linux-arm64.yml',
+      ].sort()
+    )
+  })
+
   it('rejects malformed prerelease versions outside workflow preflight', async () => {
     await expect(
       assembleReleaseArtifacts({

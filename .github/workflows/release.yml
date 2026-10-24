@@ -1747,7 +1747,9 @@ jobs:
   build-container-platform:
     name: Build Server / ${{ matrix.platform }}
     needs: [preflight, publish, plan-container-publication]
-    if: needs.plan-container-publication.outputs.action == 'build'
+    if: >-
+      needs.plan-container-publication.outputs.action == 'build' &&
+      secrets.DOCKERHUB_TOKEN != ''
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     environment: container-release
@@ -2448,7 +2450,8 @@ jobs:
     needs: [preflight, assemble, publish]
     if: >-
       github.event_name == 'push' &&
-      startsWith(github.ref, 'refs/tags/v')
+      startsWith(github.ref, 'refs/tags/v') &&
+      secrets.R2_SECRET_ACCESS_KEY != ''
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     environment: app-update-feed

@@ -156,7 +156,14 @@ export async function assembleReleaseArtifacts({
     assertRequiredAssets(target, assets, version)
     const manifests = new Map()
     for (const manifestName of manifestNames) {
-      const manifestFile = files.get(manifestName.toLowerCase())
+      let manifestFile = files.get(manifestName.toLowerCase())
+      if (
+        !manifestFile &&
+        channel === 'stable' &&
+        manifestName === target.betaManifestName
+      ) {
+        manifestFile = files.get(target.manifestName.toLowerCase())
+      }
       if (!manifestFile) {
         throw new Error(
           `${target.name}: required manifest ${manifestName} is missing`
