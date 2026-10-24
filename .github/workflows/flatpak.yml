@@ -173,6 +173,15 @@ jobs:
             install --disable-pip-version-check \
             "git+https://github.com/flatpak/flatpak-builder-tools.git@$FLATPAK_BUILDER_TOOLS_COMMIT#subdirectory=node" \
             "tomlkit==0.15.1"
+          python3 -c "
+          import glob
+          for p in glob.glob('$RUNNER_TEMP/flatpak-builder-tools/lib/**/flatpak_node_generator/requests.py', recursive=True):
+              with open(p, 'r') as f:
+                  s = f.read()
+              s = s.replace('aiohttp.ClientSession(raise_for_status=True)', 'aiohttp.ClientSession(raise_for_status=True, max_line_size=65536, max_field_size=65536)')
+              with open(p, 'w') as f:
+                  f.write(s)
+          "
           curl --fail --location --proto '=https' --tlsv1.2 \
             --output "$RUNNER_TEMP/flatpak-cargo-generator.py" \
             "https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/$FLATPAK_BUILDER_TOOLS_COMMIT/cargo/flatpak-cargo-generator.py"
